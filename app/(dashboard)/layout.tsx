@@ -1,12 +1,12 @@
-'use client' // Ubah jadi client component untuk interaksi hamburger
+'use client' 
 
 import { useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
+import Image from "next/image" // Pastikan import Image ada
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, BookOpen, Moon, Sun, CheckCircle, LogOut, Menu, X, Star } from "lucide-react"
 import { logout } from "@/app/(auth)/actions"
-import MobileBottomNav from "../../components/layout/MobileBottomNav" // Import yang baru dibuat
+import MobileBottomNav from "../../components/layout/MobileBottomNav"
 
 export default function DashboardLayout({
   children,
@@ -18,7 +18,6 @@ export default function DashboardLayout({
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
 
-  // Helper untuk class active link sidebar
   const getLinkClass = (href: string) => 
     `flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
       pathname === href 
@@ -36,18 +35,25 @@ export default function DashboardLayout({
         ${isSidebarOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"}
       `}>
         
-        {/* Logo Area */}
+        {/* LOGO AREA - SIDEBAR */}
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-linear-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center text-white font-bold shadow-emerald-200 shadow-lg">
-                    5S
+                {/* UPDATE: Ganti kotak gradient dengan Logo Image Lingkaran */}
+                <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-md border border-gray-100">
+                    <Image 
+                        src="/logo1.png" 
+                        alt="Logo 5S" 
+                        width={40} 
+                        height={40} 
+                        className="object-cover w-full h-full"
+                    />
                 </div>
                 <div>
                     <h1 className="text-lg font-bold text-gray-800 leading-tight">Ramadhan</h1>
                     <p className="text-[10px] text-gray-400 font-medium tracking-wider">REMINDER</p>
                 </div>
             </div>
-            {/* Close Button Mobile */}
+            
             <button onClick={toggleSidebar} className="md:hidden text-gray-400 hover:text-red-500">
                 <X size={24} />
             </button>
@@ -55,6 +61,7 @@ export default function DashboardLayout({
         
         {/* Navigation Links */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          {/* ... Link menu tetap sama ... */}
           <Link href="/" className={getLinkClass('/')} onClick={() => setIsSidebarOpen(false)}>
             <LayoutDashboard size={20} />
             <span>Dashboard</span>
@@ -101,7 +108,7 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      {/* Overlay untuk Mobile saat Sidebar terbuka */}
+      {/* Overlay Mobile */}
       {isSidebarOpen && (
         <div 
             className="fixed inset-0 bg-black/50 z-30 md:hidden backdrop-blur-sm"
@@ -115,8 +122,15 @@ export default function DashboardLayout({
         {/* MOBILE HEADER (Hamburger) */}
         <header className="bg-white border-b border-gray-200 p-4 flex items-center justify-between md:hidden z-20 sticky top-0">
             <div className="flex items-center gap-3">
-                 <div className="w-8 h-8 bg-linear-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">
-                    5SR
+                 {/* UPDATE: Ganti kotak gradient dengan Logo Image Lingkaran */}
+                 <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-sm border border-gray-100">
+                    <Image 
+                        src="/logo1.png" 
+                        alt="Logo 5S" 
+                        width={32} 
+                        height={32} 
+                        className="object-cover w-full h-full"
+                    />
                 </div>
                 <h1 className="font-bold text-gray-800">5 Sukses Ramadhan</h1>
             </div>
