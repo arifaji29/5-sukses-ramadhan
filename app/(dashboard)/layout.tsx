@@ -2,9 +2,10 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import Image from "next/image" // Pastikan import Image ada
+import Image from "next/image" 
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, BookOpen, Moon, Sun, CheckCircle, LogOut, Menu, X, Star } from "lucide-react"
+// UPDATE: Import Trophy icon
+import { LayoutDashboard, BookOpen, Moon, Sun, CheckCircle, LogOut, Menu, X, Star, Trophy } from "lucide-react"
 import { logout } from "@/app/(auth)/actions"
 import MobileBottomNav from "../../components/layout/MobileBottomNav"
 
@@ -38,7 +39,6 @@ export default function DashboardLayout({
         {/* LOGO AREA - SIDEBAR */}
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-3">
-                {/* UPDATE: Ganti kotak gradient dengan Logo Image Lingkaran */}
                 <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-md border border-gray-100">
                     <Image 
                         src="/logo1.png" 
@@ -61,10 +61,15 @@ export default function DashboardLayout({
         
         {/* Navigation Links */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {/* ... Link menu tetap sama ... */}
           <Link href="/" className={getLinkClass('/')} onClick={() => setIsSidebarOpen(false)}>
             <LayoutDashboard size={20} />
             <span>Dashboard</span>
+          </Link>
+
+          {/* UPDATE: Menu Leaderboard Baru */}
+          <Link href="/leaderboard" className={getLinkClass('/leaderboard')} onClick={() => setIsSidebarOpen(false)}>
+            <Trophy size={20} />
+            <span>Leaderboard</span>
           </Link>
           
           <div className="pt-4 pb-2">
@@ -122,7 +127,6 @@ export default function DashboardLayout({
         {/* MOBILE HEADER (Hamburger) */}
         <header className="bg-white border-b border-gray-200 p-4 flex items-center justify-between md:hidden z-20 sticky top-0">
             <div className="flex items-center gap-3">
-                 {/* UPDATE: Ganti kotak gradient dengan Logo Image Lingkaran */}
                  <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden bg-white shadow-sm border border-gray-100">
                     <Image 
                         src="/logo1.png" 

@@ -1,33 +1,70 @@
 import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation" // Import redirect
+import { redirect } from "next/navigation"
 import Link from "next/link"
-import { Sun, Moon, BookOpen, Star, CheckCircle, ArrowRight } from "lucide-react"
+import { Sun, Moon, BookOpen, Star, CheckCircle, Trophy, ArrowRight, Zap, Calendar } from "lucide-react"
+import { 
+    getCurrentRamadhanDay, 
+    RAMADHAN_DAYS_TOTAL 
+} from "@/lib/ramadhan-time"
 
-// Helper Component untuk Card Menu
-function MenuCard({ 
-    href, title, desc, icon: Icon, colorClass, delay 
+// --- Helper Waktu WIB ---
+function getWIBDate() {
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  return new Date(utc + (7 * 3600000)); // UTC + 7 Jam
+}
+
+// --- Helper Component: Card Progress ---
+function ProgressCard({ 
+    href, title, icon: Icon, colorClass, 
+    progressValue, progressMax, progressLabel, 
+    points, delay 
 }: { 
-    href: string, title: string, desc: string, icon: any, colorClass: string, delay: string 
+    href: string, title: string, icon: any, colorClass: string, 
+    progressValue: number, progressMax: number, progressLabel: string,
+    points: number, delay: string 
 }) {
+    const percent = Math.min(100, Math.round((progressValue / progressMax) * 100)) || 0
+    const bgSoftClass = colorClass.replace('text-', 'bg-') + '/10'
+    const bgBarClass = colorClass.replace('text-', 'bg-')
+
     return (
         <Link 
             href={href} 
-            className="group relative bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+            className="group relative bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full"
             style={{ animationDelay: delay }}
         >
-            {/* Background Icon Decoration */}
-            <div className={`absolute top-0 right-0 p-20 opacity-5 rounded-full -mr-10 -mt-10 transition-transform group-hover:scale-110 ${colorClass.replace('text-', 'bg-')}`} />
+            <div className={`absolute top-0 right-0 p-16 opacity-5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110 ${bgBarClass}`} />
             
-            <div className="relative z-10">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${colorClass} bg-opacity-10 bg-current`}>
-                    <Icon size={24} />
+            <div className="relative z-10 w-full">
+                <div className="flex justify-between items-start mb-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorClass} ${bgSoftClass}`}>
+                        <Icon size={24} strokeWidth={2.5} />
+                    </div>
+                    <div className="bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
+                        <Zap size={12} className="fill-yellow-500 text-yellow-500" />
+                        {points} Poin
+                    </div>
                 </div>
-                <h3 className="text-lg font-bold text-gray-800 mb-1 group-hover:text-emerald-600 transition-colors">{title}</h3>
-                <p className="text-sm text-gray-500 mb-4 line-clamp-2">{desc}</p>
+
+                <h3 className="text-base font-bold text-gray-800 mb-1 group-hover:text-emerald-600 transition-colors">{title}</h3>
                 
-                <div className="flex items-center text-xs font-semibold uppercase tracking-wider text-gray-400 group-hover:text-emerald-600 transition-colors">
-                    Lihat Progress <ArrowRight size={14} className="ml-1 transition-transform group-hover:translate-x-1" />
+                <div className="mt-4 space-y-2">
+                    <div className="flex justify-between text-xs font-medium text-gray-500">
+                        <span>Progress</span>
+                        <span className="text-gray-900">{progressLabel}</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                        <div 
+                            className={`h-full rounded-full transition-all duration-1000 ease-out ${bgBarClass}`} 
+                            style={{ width: `${percent}%` }}
+                        />
+                    </div>
                 </div>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-gray-50 flex items-center text-xs font-bold uppercase tracking-wider text-gray-400 group-hover:text-emerald-600 transition-colors relative z-10">
+                Lihat Detail <ArrowRight size={14} className="ml-auto transition-transform group-hover:translate-x-1" />
             </div>
         </Link>
     )
@@ -35,35 +72,108 @@ function MenuCard({
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-  
-  // Ambil data user
   const { data: { user } } = await supabase.auth.getUser()
 
-  // PROTEKSI HALAMAN: Redirect ke login jika user belum login
   if (!user) {
     redirect('/login')
   }
 
-  // Ambil Nama User (Opsional, ambil dari email jika metadata kosong)
+  // --- 1. FETCH DATA ---
+  const { data: puasaData } = await supabase.from('puasa_progress').select('is_fasting').eq('user_id', user.id).eq('is_fasting', true)
+  const { data: tarawihData } = await supabase.from('tarawih_progress').select('location').eq('user_id', user.id)
+  const { data: quranData } = await supabase.from('quran_progress').select('completion_count').eq('user_id', user.id)
+  const { data: userSettings } = await supabase.from('user_settings').select('total_khatam_count').eq('user_id', user.id).single()
+  const { data: itikafData } = await supabase.from('lailatul_qadar_progress').select('night_number, is_itikaf').eq('user_id', user.id).eq('is_itikaf', true)
+  const { data: zakatData } = await supabase.from('zakat_fitrah_progress').select('is_paid').eq('user_id', user.id).single()
+
+  // --- 2. LOGIKA POIN ---
+  const puasaCount = puasaData?.length || 0
+  const puasaPoints = puasaCount * 1
+
+  let tarawihPoints = 0
+  const tarawihCount = tarawihData?.length || 0
+  tarawihData?.forEach((t) => {
+      const lokasi = t.location ? t.location.toLowerCase() : ''
+      if (lokasi === 'masjid') {
+          tarawihPoints += 2
+      } else {
+          tarawihPoints += 1
+      }
+  })
+
+  const juzCompletedCount = quranData?.filter(q => q.completion_count > 0).length || 0
+  const khatamCount = userSettings?.total_khatam_count || 0
+  const tadarusPoints = (juzCompletedCount * 5) + (khatamCount * 2)
+
+  let itikafPoints = 0
+  const itikafCount = itikafData?.length || 0
+  itikafData?.forEach((i) => {
+      const isOdd = i.night_number % 2 !== 0
+      itikafPoints += (isOdd ? 2 : 1)
+  })
+
+  const isZakatPaid = zakatData?.is_paid || false
+  const zakatPoints = isZakatPaid ? 2 : 0
+
+  const totalGlobalPoints = puasaPoints + tarawihPoints + tadarusPoints + itikafPoints + zakatPoints
   const displayName = user?.user_metadata?.username || user?.email?.split('@')[0] || "Hamba Allah"
 
+  // --- 3. LOGIKA TANGGAL (WIB) ---
+  const nowWIB = getWIBDate();
+  const currentRamadhanDay = getCurrentRamadhanDay()
+  const safeDay = Math.max(1, Math.min(currentRamadhanDay, RAMADHAN_DAYS_TOTAL))
+  
+  const masehiDate = nowWIB.toLocaleDateString("id-ID", {
+      weekday: 'short', 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric'
+  })
+  const hijriDate = `${safeDay} Ramadhan`
+
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="max-w-5xl mx-auto space-y-8 pb-10">
       
       {/* SECTION 1: WELCOME BANNER */}
-      <div className="bg-linear-to-r from-emerald-600 to-teal-800 rounded-3xl p-6 md:p-10 text-white shadow-2xl relative overflow-hidden">
-         {/* Dekorasi Background */}
-         <div className="absolute top-0 right-0 -mt-10 -mr-10 opacity-10">
+      <div className="bg-linear-to-r from-emerald-600 to-teal-800 rounded-3xl p-6 md:p-8 text-white shadow-2xl relative overflow-hidden">
+         {/* Dekorasi Bintang */}
+         <div className="absolute top-0 right-0 -mt-10 -mr-10 opacity-10 pointer-events-none">
             <Star size={300} />
          </div>
-         
-         <div className="relative z-10 max-w-2xl">
-            <h1 className="text-2xl md:text-4xl font-bold mb-2">
-                Assalamu'alaikum, {displayName}! 👋
-            </h1>
-            <p className="text-emerald-100 text-sm md:text-base leading-relaxed mb-6">
-               Yuk berlomba-lomba dalam kebaikan, perbanyak ibadah, dan maksimalkan pahala di bulan Ramadhan.
-            </p>
+
+         <div className="relative z-10">
+             
+             {/* 1. WIDGET TANGGAL (Pojok Kiri Atas) */}
+             <div className="inline-flex bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] md:text-xs font-medium border border-white/10 items-center gap-2 shadow-sm mb-4">
+                 <Calendar size={12} className="text-emerald-200" />
+                 <span>{masehiDate}</span>
+                 <span className="text-white/20">|</span>
+                 <Moon size={12} className="text-yellow-300 fill-yellow-300" />
+                 <span className="font-bold text-yellow-100">{hijriDate}</span>
+             </div>
+
+             {/* Container Flex untuk Text dan Score */}
+             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                 
+                 {/* 2. TEXT GREETING */}
+                 <div className="max-w-lg">
+                    <h1 className="text-2xl md:text-3xl font-bold mb-2">
+                        Assalamu'alaikum, {displayName}!
+                    </h1>
+                    <p className="text-emerald-100 text-sm leading-relaxed">
+                        Terus semangat kumpulkan poin kebaikan di bulan Ramadhan ini.
+                    </p>
+                 </div>
+
+                 {/* 3. SCORE CARD (Kanan Bawah pada Desktop / Bawah Text pada Mobile) */}
+                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 min-w-37.5 text-center self-end md:self-auto shadow-lg">
+                    <div className="text-emerald-200 text-xs font-bold uppercase tracking-widest mb-1">Total Poin</div>
+                    <div className="text-4xl font-extrabold text-yellow-300 drop-shadow-sm flex items-center justify-center gap-2">
+                        <Trophy size={28} className="text-yellow-400" />
+                        {totalGlobalPoints}
+                    </div>
+                 </div>
+             </div>
          </div>
       </div>
 
@@ -71,53 +181,67 @@ export default async function DashboardPage() {
       <div>
         <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
             <div className="w-1 h-6 bg-emerald-500 rounded-full"/>
-            Menu 5 Sukses
+            Progress Ibadah Kamu
         </h2>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            <MenuCard 
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+            <ProgressCard 
                 href="/puasa"
                 title="1. Sukses Puasa"
-                desc="Catat hari-harimu berpuasa dan jaga lisan serta hati."
                 icon={Sun}
-                colorClass="text-orange-500"
+                colorClass="text-orange-500" 
+                progressValue={puasaCount}
+                progressMax={30}
+                progressLabel={`${puasaCount} / 30 Hari`}
+                points={puasaPoints}
                 delay="0ms"
             />
-             <MenuCard 
+             <ProgressCard 
                 href="/tarawih"
                 title="2. Sukses Tarawih"
-                desc="Hidupkan malam Ramadhan dengan sholat Tarawih berjamaah."
                 icon={Moon}
-                colorClass="text-violet-500"
+                colorClass="text-violet-500" 
+                progressValue={tarawihCount}
+                progressMax={30}
+                progressLabel={`${tarawihCount} / 30 Malam`}
+                points={tarawihPoints}
                 delay="100ms"
             />
-             <MenuCard 
+             <ProgressCard 
                 href="/tadarus"
                 title="3. Sukses Tadarus"
-                desc="Targetkan khatam Al-Qur'an minimal satu kali bulan ini."
                 icon={BookOpen}
-                colorClass="text-blue-500"
+                colorClass="text-blue-500" 
+                progressValue={juzCompletedCount}
+                progressMax={30}
+                progressLabel={`${juzCompletedCount} / 30 Juz`}
+                points={tadarusPoints}
                 delay="200ms"
             />
-             <MenuCard 
+             <ProgressCard 
                 href="/lailatul-qadar"
                 title="4. Lailatul Qadar"
-                desc="Raih kemuliaan malam seribu bulan di 10 hari terakhir."
                 icon={Star}
-                colorClass="text-yellow-500"
+                colorClass="text-yellow-500" 
+                progressValue={itikafCount}
+                progressMax={10}
+                progressLabel={`${itikafCount} / 10 Malam`}
+                points={itikafPoints}
                 delay="300ms"
             />
-             <MenuCard 
+             <ProgressCard 
                 href="/zakat"
                 title="5. Sukses Zakat"
-                desc="Tunaikan zakat fitrah sebelum sholat Idul Fitri."
                 icon={CheckCircle}
-                colorClass="text-green-600"
+                colorClass="text-green-600" 
+                progressValue={isZakatPaid ? 1 : 0}
+                progressMax={1}
+                progressLabel={isZakatPaid ? "Sudah Bayar" : "Belum Bayar"}
+                points={zakatPoints}
                 delay="400ms"
             />
         </div>
       </div>
-
     </div>
   )
 }
