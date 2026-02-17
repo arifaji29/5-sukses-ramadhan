@@ -65,7 +65,7 @@ export default function TargetCard({ currentTarget, juzCompletedToday, totalRead
         <div className="space-y-4 flex-1 w-full pt-2 md:pt-0">
             <div>
                 <h2 className="text-sky-100 font-medium text-sm flex items-center gap-2 mb-1">
-                    <Trophy size={16} /> Target Ramadhan
+                    <Trophy size={16} /> Pilih Target Khatam
                 </h2>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                     <h3 className="text-3xl font-bold min-w-35">
@@ -130,8 +130,8 @@ export default function TargetCard({ currentTarget, juzCompletedToday, totalRead
                             <Trophy size={24} className="fill-yellow-900" />
                         </div>
                     </div>
-                    <p className="font-bold text-lg">Target Tercapai!</p>
-                    <p className="text-xs text-sky-100">Hebat! Istiqomah ya.</p>
+                    <p className="font-bold text-lg">Target Harian Tercapai!</p>
+                    <p className="text-xs text-sky-100">Hebat! Pertahankan ya.</p>
                 </div>
             ) : (
                 <div>

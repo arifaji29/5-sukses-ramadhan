@@ -107,7 +107,7 @@ export default async function TadarusPage() {
                     <BookOpen className="text-sky-200 fill-sky-200/20 shrink-0" /> Sukses Tadarus
                 </h1>
                 <div className="flex items-center gap-2 mt-1 text-sky-100 text-xs md:text-sm">
-                   <p>Raih pahala berlipat ganda dengan Al-Qur'an.</p>
+                   <p>Raih pahala berlipat ganda dengan membaca Al-Qur'an.</p>
                    {/* Badge Riwayat Khatam Kecil */}
                    {historyKhatam > 0 && (
                        <span className="bg-yellow-400/20 text-yellow-100 px-2 py-0.5 rounded text-[10px] font-bold border border-yellow-400/30 flex items-center gap-1">
@@ -120,10 +120,10 @@ export default async function TadarusPage() {
             {/* HADITS TENTANG AL-QURAN */}
             <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3 md:p-5 border border-white/10 max-w-2xl">
                 <p className="text-lg md:text-2xl font-serif text-right mb-2 leading-loose text-yellow-100">
-                   مَنْ قَرَأَ حَرْفًا مِنْ كِتَابِ اللَّهِ فَلَهُ بِهِ حَسَنَةٌ، وَالحَسَنَةُ بِعَشْرِ أَمْثَالِهَا
+                   مَنْ قَرَأَ حَرْفًا مِنْ كِتَابِ اللَّهِ فَلَهُ بِهِ حَسَنَةٌ وَالْحَسَنَةُ بِعَشْرِ أَمْثَالِهَا لَا أَقُولُ الم حَرْفٌ وَلَكِنْ أَلِفٌ حَرْفٌ وَلَامٌ حَرْفٌ وَمِيمٌ حَرْفٌ
                 </p>
                 <p className="text-[10px] md:text-sm text-sky-50 italic leading-relaxed">
-                    "Barangsiapa yang membaca satu huruf dari Kitab Allah, maka dia akan mendapatkan satu kebaikan, dan satu kebaikan itu akan dilipatgandakan menjadi sepuluh kebaikan."
+                   “Barangsiapa yang membaca satu huruf dari kitab Allah (Al Qur’an), maka ia akan mendapatkan satu kebaikan dengan huruf itu, dan satu kebaikan akan dilipatgandakan menjadi sepuluh. Aku tidaklah mengatakan Alif Laam Miim itu satu huruf, tetapi alif satu huruf, lam satu huruf dan Mim satu huruf.”
                     <span className="font-bold not-italic ml-1 text-white block md:inline md:ml-1 mt-1 md:mt-0">(HR. Tirmidzi)</span>
                 </p>
             </div>
