@@ -8,6 +8,13 @@ import {
     RAMADHAN_DAYS_TOTAL 
 } from "@/lib/ramadhan-time"
 
+// --- Helper Waktu WIB (Agar Tanggal Masehi Akurat) ---
+function getWIBDate() {
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  return new Date(utc + (7 * 3600000)); // UTC + 7 Jam
+}
+
 export default async function ZakatPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -19,12 +26,13 @@ export default async function ZakatPage() {
     .eq('user_id', user?.id)
     .single()
 
-  // 2. Waktu Saat Ini (Untuk Widget Tanggal)
+  // 2. Waktu Saat Ini (Gunakan WIB)
+  const nowWIB = getWIBDate();
+  
   const currentRamadhanDay = getCurrentRamadhanDay()
   const safeDay = Math.max(1, Math.min(currentRamadhanDay, RAMADHAN_DAYS_TOTAL))
   
-  const now = new Date()
-  const masehiDate = now.toLocaleDateString("id-ID", {
+  const masehiDate = nowWIB.toLocaleDateString("id-ID", {
       weekday: 'short', 
       day: 'numeric', 
       month: 'short', 

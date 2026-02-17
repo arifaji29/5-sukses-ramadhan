@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
-import { JUZ_DATA } from "@/lib/juz-data" // Pastikan file ini ada
-import { SURAH_DATA } from "@/lib/surah-data" // Pastikan file ini ada
+import { JUZ_DATA } from "@/lib/juz-data"
+import { SURAH_DATA } from "@/lib/surah-data"
 import JuzItem from "@/components/features/tadarus/JuzItem"
 import TargetCard from "@/components/features/tadarus/TargetCard" 
 import ResetButton from "@/components/features/tadarus/ResetButton" 
@@ -10,7 +10,14 @@ import {
     getCurrentRamadhanDay, 
     RAMADHAN_DAYS_TOTAL 
 } from "@/lib/ramadhan-time"
-import { BookOpen, Trophy, Calendar, Moon } from "lucide-react"
+import { BookOpen, Trophy, Calendar, Moon, Star } from "lucide-react"
+
+// --- Helper Waktu WIB (PENTING: Agar sinkron dengan server) ---
+function getWIBDate() {
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  return new Date(utc + (7 * 3600000)); // UTC + 7 Jam
+}
 
 export default async function TadarusPage() {
   const supabase = await createClient()
@@ -33,27 +40,34 @@ export default async function TadarusPage() {
   const historyKhatam = settings?.total_khatam_count || 0
 
   // 3. HITUNG JUMLAH JUZ SELESAI HARI INI (Untuk Misi Harian)
-  const today = new Date().toISOString().split('T')[0] 
+  // GUNAKAN WAKTU WIB AGAR AKURAT
+  const nowWIB = getWIBDate();
+  const todayISO = nowWIB.toISOString().split('T')[0] // Format YYYY-MM-DD sesuai WIB
   
   const juzCompletedToday = progress?.filter(p => {
     // Syarat: Sudah selesai (count > 0) DAN waktu update terakhir adalah hari ini
     if (!p.completion_count || p.completion_count < 1) return false
     if (!p.last_read_at) return false
     
-    const completedDate = new Date(p.last_read_at).toISOString().split('T')[0]
-    return completedDate === today
+    // Konversi waktu database (UTC) ke WIB dulu sebelum dibandingkan
+    const dbDate = new Date(p.last_read_at);
+    const dbUtc = dbDate.getTime() + (dbDate.getTimezoneOffset() * 60000);
+    const dbWib = new Date(dbUtc + (7 * 3600000));
+    
+    const completedDateISO = dbWib.toISOString().split('T')[0];
+    
+    return completedDateISO === todayISO
   }).length || 0
 
   // 4. HITUNG TOTAL GLOBAL (Riwayat Khatam + Progress Saat Ini)
   const currentProgressCount = progress?.filter(p => p.completion_count > 0).length || 0
   const totalReadGlobal = (historyKhatam * 30) + currentProgressCount
 
-  // 5. WIDGET TANGGAL & WAKTU
+  // 5. WIDGET TANGGAL & WAKTU (Gunakan nowWIB)
   const currentRamadhanDay = getCurrentRamadhanDay()
   const safeDay = Math.max(1, Math.min(currentRamadhanDay, RAMADHAN_DAYS_TOTAL))
   
-  const now = new Date()
-  const masehiDate = now.toLocaleDateString("id-ID", {
+  const masehiDate = nowWIB.toLocaleDateString("id-ID", {
       weekday: 'short', 
       day: 'numeric', 
       month: 'short', 
@@ -70,6 +84,10 @@ export default async function TadarusPage() {
         {/* Hiasan Background */}
         <div className="absolute -bottom-10 right-0 opacity-10 pointer-events-none">
             <BookOpen size={240} />
+        </div>
+        {/* Tambahan hiasan bintang agar senada */}
+        <div className="absolute top-10 right-20 opacity-20 pointer-events-none animate-pulse">
+            <Star size={40} />
         </div>
         
         {/* WIDGET TANGGAL COMPACT (Pojok Kanan Atas) */}
@@ -130,6 +148,7 @@ export default async function TadarusPage() {
                const isDone = (logData?.completion_count || 0) > 0
                
                let lastReadInfo = null;
+               // Cek Surah Terakhir Dibaca
                if (!isDone && logData?.last_read_surah && logData?.last_read_ayah) {
                    const surahName = SURAH_DATA.find(s => s.number === logData.last_read_surah)?.name
                    
@@ -164,7 +183,7 @@ export default async function TadarusPage() {
               <ResetButton />
           </div>
           <p className="text-center text-xs text-gray-400 mt-4 max-w-md mx-auto">
-             *Gunakan "Ulangi Putaran" untuk mereset checklist juz saat khatam. Gunakan "Reset Data" untuk menghapus permanen semua riwayat.
+              *Gunakan "Ulangi Putaran" untuk mereset checklist juz saat khatam. Gunakan "Reset Data" untuk menghapus permanen semua riwayat.
           </p>
       </div>
 

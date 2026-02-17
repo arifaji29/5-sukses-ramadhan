@@ -1,11 +1,18 @@
 import { createClient } from "@/lib/supabase/server"
 import ItikafItem from "@/components/features/lailatul-qadar/ItikafItem"
-import { 
-    RAMADHAN_START_DATE_STR, 
-    getCurrentRamadhanDay, 
-    RAMADHAN_DAYS_TOTAL 
+import {
+  RAMADHAN_START_DATE_STR,
+  getCurrentRamadhanDay,
+  RAMADHAN_DAYS_TOTAL
 } from "@/lib/ramadhan-time"
 import { Moon, Calendar, Star, Flame, CheckCircle, Sparkles, Clock } from "lucide-react"
+
+// --- Helper Waktu WIB (PENTING: Agar sinkron dengan server) ---
+function getWIBDate() {
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  return new Date(utc + (7 * 3600000)); // UTC + 7 Jam
+}
 
 export default async function LailatulQadarPage() {
   const supabase = await createClient()
@@ -13,18 +20,17 @@ export default async function LailatulQadarPage() {
 
   // 1. Ambil Data
   const { data: rawProgress } = await supabase
-    .from('lailatul_qadar_progress') 
+    .from('lailatul_qadar_progress')
     .select('*')
     .eq('user_id', user?.id)
 
   // 2. FILTER & MAPPING DATA
-  // Filter hari >= 21 untuk membuang data 'sampah' (jika ada) dari hari 1-20
   const progress = rawProgress?.filter(p => p.night_number >= 21) || []
 
-  // 3. Hitung Statistik (Hanya hitung yang is_itikaf === true)
+  // 3. Hitung Statistik
   const totalItikaf = progress.filter(p => p.is_itikaf === true).length
 
-  // Hitung Streak (Hanya dari yang TRUE)
+  // Hitung Streak
   const sortedDays = progress
     .filter(p => p.is_itikaf === true)
     .map(p => p.night_number)
@@ -32,63 +38,67 @@ export default async function LailatulQadarPage() {
 
   let maxStreak = 0
   let currentStreak = 0
-  
+
   if (sortedDays.length > 0) {
       for (let i = 0; i < sortedDays.length; i++) {
           if (i === 0 || sortedDays[i] === sortedDays[i - 1] + 1) {
               currentStreak++
           } else {
-              currentStreak = 1 
+              currentStreak = 1
           }
           maxStreak = Math.max(maxStreak, currentStreak)
       }
   }
 
-  // 4. Waktu Saat Ini
+  // 4. Waktu Saat Ini (WIB)
+  const nowWIB = getWIBDate(); // GUNAKAN WIB
   const currentRamadhanDay = getCurrentRamadhanDay()
   const safeDay = Math.max(1, Math.min(currentRamadhanDay, RAMADHAN_DAYS_TOTAL))
-  
-  const now = new Date()
-  const masehiDate = now.toLocaleDateString("id-ID", {
-      weekday: 'short', 
-      day: 'numeric', 
-      month: 'short', 
+
+  const masehiDate = nowWIB.toLocaleDateString("id-ID", {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
       year: 'numeric'
   })
   const hijriDate = `${safeDay} Ramadhan`
 
   // 5. Generate List 10 Malam Terakhir
   const days = Array.from({ length: 10 }, (_, i) => {
-      const dayNum = 21 + i 
-      
+      const dayNum = 21 + i
+
+      // Tanggal Masehi (H-1 dari Puasa karena I'tikaf dimulai malam hari)
       const date = new Date(RAMADHAN_START_DATE_STR)
-      date.setDate(date.getDate() + (dayNum - 1))
-      
+      date.setDate(date.getDate() + (dayNum - 2)) // H-1 dari hari ke-21 Puasa
+
       const dateStr = date.toLocaleDateString("id-ID", {
           weekday: 'long',
           day: 'numeric',
           month: 'short'
       })
-      
+
       const year = date.getFullYear()
       const month = String(date.getMonth() + 1).padStart(2, '0')
       const d = String(date.getDate()).padStart(2, '0')
       const dateIso = `${year}-${month}-${d}`
 
-      // Cari data di database berdasarkan night_number
       const logData = progress.find(p => p.night_number === dayNum)
-      
-      // Cek apakah is_itikaf bernilai true
       const isCompleted = logData?.is_itikaf === true
 
-      const isLocked = dayNum > currentRamadhanDay
+      // LOGIKA LOCK (WIB)
+      // I'tikaf dimulai malam hari. Kita buka kunci jam 18:00 WIB pada tanggal tersebut.
+      const unlockTime = new Date(date)
+      unlockTime.setHours(18, 0, 0, 0) // Buka jam 18:00 WIB
+
+      const isLocked = nowWIB < unlockTime
+
       const isOddNight = dayNum % 2 !== 0
 
       return {
           day: dayNum,
           dateDisplay: dateStr,
           dateValue: dateIso,
-          isCompleted: isCompleted, 
+          isCompleted: isCompleted,
           isLocked: isLocked,
           isOddNight: isOddNight
       }
@@ -98,10 +108,10 @@ export default async function LailatulQadarPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20">
-      
+
       {/* HEADER DASHBOARD */}
       <div className="bg-linear-to-br from-indigo-900 via-purple-900 to-slate-900 rounded-2xl p-5 md:p-8 text-white shadow-xl relative overflow-hidden flex flex-col">
-        
+
         <div className="absolute top-10 right-20 opacity-30 animate-pulse">
             <Star size={30} className="text-yellow-200 fill-yellow-200" />
         </div>
@@ -111,7 +121,7 @@ export default async function LailatulQadarPage() {
         <div className="absolute -bottom-10 right-0 opacity-10 pointer-events-none">
             <Moon size={200} />
         </div>
-        
+
         <div className="flex justify-end w-full mb-4 md:mb-0 md:absolute md:top-6 md:right-6 z-20">
              <div className="bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] md:text-xs font-medium border border-white/10 flex items-center gap-2 shadow-sm">
                  <Calendar size={12} className="text-indigo-200" />
@@ -129,6 +139,7 @@ export default async function LailatulQadarPage() {
                 </h1>
                 <p className="text-indigo-200 text-xs md:text-sm mt-1 leading-snug max-w-[80%]">
                     Buru kemuliaan 10 malam terakhir.
+                    <span className="block mt-1 text-indigo-300 text-[10px] italic opacity-80">(Terbuka setiap pukul 18.00 WIB)</span>
                 </p>
             </div>
 
@@ -163,7 +174,7 @@ export default async function LailatulQadarPage() {
                     <span className="font-bold not-italic ml-1 text-white block md:inline md:ml-1 mt-1 md:mt-0">(QS. Al-Qadr: 3)</span>
                 </p>
             </div>
-            
+
             {daysToLailatulQadar > 0 && (
                  <div className="mt-4 inline-flex items-center gap-2 bg-yellow-500/20 border border-yellow-500/30 px-3 py-1.5 rounded-lg text-xs text-yellow-100">
                     <Clock size={14} />
@@ -175,14 +186,14 @@ export default async function LailatulQadarPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {days.map((item) => (
-            <ItikafItem 
+            <ItikafItem
                 key={item.day}
                 day={item.day}
                 dateDisplay={item.dateDisplay}
                 dateValue={item.dateValue}
                 isCompleted={item.isCompleted}
                 isLocked={item.isLocked}
-                isOddNight={item.isOddNight} 
+                isOddNight={item.isOddNight}
             />
         ))}
       </div>
