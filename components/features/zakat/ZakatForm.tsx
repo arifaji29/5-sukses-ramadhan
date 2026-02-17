@@ -48,7 +48,7 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
             </div>
             
             <div>
-                <h2 className="text-2xl font-bold text-gray-900">Alhamdulillah, Lunas!</h2>
+                <h2 className="text-2xl font-bold text-gray-900">الْحَمْدُ لِلَّهِ جَزَاكُمُ اللهُ خَيْرًا</h2>
                 <p className="text-gray-600 mt-1 text-sm">Anda telah menunaikan kewajiban Zakat Fitrah.</p>
                 <div className="mt-3">
                     <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 inline-flex items-center gap-1">

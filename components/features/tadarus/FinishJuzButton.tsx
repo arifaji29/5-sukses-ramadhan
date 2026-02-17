@@ -1,13 +1,12 @@
 'use client'
 
 import { toggleJuzCompletion } from "@/app/(dashboard)/tadarus/actions"
-import { CheckCircle, Circle, Loader2 } from "lucide-react"
+import { Check, Circle, Loader2 } from "lucide-react" // Menggunakan ikon Check yang lebih simple
 import { useTransition } from "react"
 
 interface FinishJuzButtonProps {
   juzNumber: number
   isCompleted: boolean
-  // Props Baru: Data Ayat Terakhir di Juz ini
   lastAyahData: {
     surah: number
     ayah: number
@@ -19,7 +18,6 @@ export default function FinishJuzButton({ juzNumber, isCompleted, lastAyahData }
 
   const handleToggle = () => {
     startTransition(async () => {
-      // Kirim data lastAyahData ke server action
       await toggleJuzCompletion(juzNumber, isCompleted, lastAyahData)
     })
   }
@@ -28,24 +26,31 @@ export default function FinishJuzButton({ juzNumber, isCompleted, lastAyahData }
     <button
       onClick={handleToggle}
       disabled={isPending}
-      className={`w-full py-4 rounded-xl flex items-center justify-center gap-3 font-bold text-lg transition-all shadow-md
+      className={`
+        relative overflow-hidden group flex items-center justify-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold transition-all duration-300
         ${isCompleted 
-            ? "bg-white border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50" 
-            : "bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-lg"
+            ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border border-emerald-200" 
+            : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-md hover:shadow-lg hover:-translate-y-0.5"
         }
+        disabled:opacity-70 disabled:cursor-not-allowed
       `}
     >
       {isPending ? (
-        <Loader2 className="animate-spin" />
+        <>
+            <Loader2 size={16} className="animate-spin" />
+            <span>Memproses...</span>
+        </>
       ) : isCompleted ? (
         <>
-            <CheckCircle className="fill-emerald-100" />
-            <span>Alhamdulillah Selesai (Batalkan)</span>
+            <div className="bg-emerald-600 rounded-full p-0.5">
+                <Check size={12} className="text-white" strokeWidth={3} />
+            </div>
+            <span>Sudah Selesai</span>
         </>
       ) : (
         <>
-            <Circle className="text-emerald-200" />
-            <span>Tandai Selesai Juz {juzNumber}</span>
+            <Circle size={16} className="opacity-50" />
+            <span>Tandai Selesai</span>
         </>
       )}
     </button>

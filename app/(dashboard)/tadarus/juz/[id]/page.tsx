@@ -1,15 +1,17 @@
 import Link from "next/link"
-import { ArrowLeft, ChevronDown } from "lucide-react" // Import ChevronDown
+import { ArrowLeft, ChevronDown, Check } from "lucide-react"
 import { SURAH_DATA } from "@/lib/surah-data" 
 import { createClient } from "@/lib/supabase/server" 
 import BookmarkButton from "@/components/features/tadarus/BookmarkButton" 
 import FinishJuzButton from "@/components/features/tadarus/FinishJuzButton" 
+import VerseAudioPlayer from "@/components/features/tadarus/VerseAudioPlayer"
 
 interface Ayah {
   number: number;
   text: string;
   surah: {
     number: number;
+    name: string;
     revelationType: string;
     numberOfAyahs: number;
   };
@@ -19,7 +21,7 @@ interface Ayah {
   translation?: string;
 }
 
-// Fetch Data API
+// 1. Fetch Data API
 async function getJuzData(id: string) {
   try {
     const resArab = await fetch(`https://api.alquran.cloud/v1/juz/${id}/ar.alafasy`, { 
@@ -47,18 +49,43 @@ async function getJuzData(id: string) {
   }
 }
 
-// Helper: Hapus Bismillah di awal ayat 1 (Lebih Robust dengan Regex)
-const formatAyatText = (text: string, surahNumber: number, verseNumber: number) => {
-    // Jangan hapus Bismillah di Al-Fatihah (Surat 1)
-    if (surahNumber === 1) return text; 
-    
-    // Regex untuk menangkap Bismillah + Spasi di awal kalimat
-    const bismillahRegex = /^بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ\s*/;
-    
-    if (verseNumber === 1) {
-      return text.replace(bismillahRegex, "").trim();
+// 2. Helper: Memisahkan Bismillah (MENGGUNAKAN REGEX AGAR LEBIH KUAT)
+const splitBismillah = (text: string, surahNumber: number, verseNumber: number) => {
+    // Jangan pisahkan untuk Al-Fatihah (1) & At-Taubah (9)
+    if (surahNumber === 1 || surahNumber === 9 || verseNumber !== 1) {
+        return { bismillah: null, content: text };
     }
-    return text;
+    
+    // REGEX: Mencari Bismillah di awal string dengan toleransi spasi apapun (\s+)
+    // Pola: Bismi - Allah - ArRahman - ArRahim
+    const bismillahRegex = /^بِسْمِ\s+ٱللَّهِ\s+ٱلرَّحْمَٰنِ\s+ٱلرَّحِيمِ\s*/;
+
+    const match = text.match(bismillahRegex);
+
+    if (match) {
+        // Jika ketemu, return teks bismillah murni & sisa ayatnya
+        const foundBismillah = match[0].trim();
+        const cleanContent = text.replace(bismillahRegex, "").trim();
+
+        return { 
+            bismillah: foundBismillah, 
+            content: cleanContent 
+        };
+    }
+    
+    // Fallback: Jika regex gagal (sangat jarang), cek manual karakter 'Ar-Rahim'
+    // Ini jaring pengaman terakhir
+    if (text.includes("ٱلرَّحِيمِ")) {
+         const parts = text.split("ٱلرَّحِيمِ");
+         if (parts.length > 1 && parts[0].length < 50) { // Pastikan split terjadi di awal
+             return {
+                 bismillah: parts[0] + "ٱلرَّحِيمِ",
+                 content: parts.slice(1).join(" ").trim()
+             }
+         }
+    }
+
+    return { bismillah: null, content: text };
 }
 
 // Helper: Angka Arab
@@ -75,7 +102,6 @@ export default async function BacaJuzPage({ params }: { params: Promise<{ id: st
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
-  // 2. AMBIL STATUS PENYELESAIAN (Completion Count)
   const { data: progress } = await supabase
     .from('quran_progress')
     .select('last_read_surah, last_read_ayah, completion_count') 
@@ -83,7 +109,6 @@ export default async function BacaJuzPage({ params }: { params: Promise<{ id: st
     .eq('juz_number', juzId)
     .single()
 
-  // Cek apakah sudah khatam (completion_count > 0)
   const isCompleted = (progress?.completion_count || 0) > 0;
 
   if (!ayahs) {
@@ -95,75 +120,88 @@ export default async function BacaJuzPage({ params }: { params: Promise<{ id: st
     )
   }
 
-  // --- LOGIKA BARU: TENTUKAN AYAT TERAKHIR ---
   const lastAyahObj = ayahs[ayahs.length - 1];
   const lastAyahData = {
       surah: lastAyahObj.surah.number,
       ayah: lastAyahObj.numberInSurah
   };
-  // -------------------------------------------
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-20">
+    <div className="max-w-4xl mx-auto space-y-4 pb-24">
       
       {/* Header Sticky */}
-      <div className="bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-sm border border-gray-100 sticky top-0 z-20 flex items-center gap-4">
+      <div className="bg-white/90 backdrop-blur-md px-4 py-3 rounded-xl shadow-sm border border-gray-100 sticky top-0 z-20 flex items-center gap-4">
         <Link href="/tadarus" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <ArrowLeft className="text-gray-600" />
+            <ArrowLeft size={20} className="text-gray-600" />
         </Link>
         <div>
-            <h1 className="text-xl font-bold text-emerald-800">Juz {id}</h1>
-            <p className="text-xs text-gray-500">Membaca per Juz</p>
+            <h1 className="text-lg font-bold text-emerald-800">Juz {id}</h1>
+            <p className="text-[10px] text-gray-500">Membaca per Juz</p>
         </div>
       </div>
 
-      <div className="space-y-2">
-        {ayahs.map((ayat: Ayah, index: number) => {
+      <div className="px-1 space-y-3">
+        {ayahs.map((ayat: Ayah) => {
             const currentSurahNum = ayat.surah.number;
-            const prevSurahNum = index > 0 ? ayahs[index - 1].surah.number : -1;
-            const isNewSurah = currentSurahNum !== prevSurahNum;
             const surahIndo = SURAH_DATA.find(s => s.number === currentSurahNum);
+            const showSurahHeader = ayat.numberInSurah === 1;
 
             const isLastRead = 
                 progress?.last_read_surah === currentSurahNum && 
                 progress?.last_read_ayah === ayat.numberInSurah;
 
+            // PROSES PEMISAHAN BISMILLAH (Logic baru dgn Regex)
+            const { bismillah, content } = splitBismillah(ayat.text, currentSurahNum, ayat.numberInSurah);
+
             return (
-                <div key={index}>
-                    {/* Header Surat Baru */}
-                    {isNewSurah && surahIndo && (
-                        <div className="mt-12 mb-6 text-center bg-emerald-50 py-6 rounded-xl border border-emerald-100">
-                            <h2 className="text-2xl font-bold text-emerald-800 mb-1">{surahIndo.name}</h2>
-                            <p className="text-sm text-emerald-600 mb-4">{surahIndo.arti} • {ayat.surah.revelationType === 'Meccan' ? 'Makkiyah' : 'Madaniyah'} • {ayat.surah.numberOfAyahs} Ayat</p>
-                            {/* Bismillah Header (Tampilkan untuk semua surat kecuali Taubah dan Al-Fatihah yang sudah punya di teks) */}
-                            {currentSurahNum !== 9 && (
-                                <p className="font-amiri text-3xl mt-2 text-emerald-900 leading-loose">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم</p>
-                            )}
+                <div key={`${ayat.surah.number}-${ayat.numberInSurah}`}>
+                    
+                    {/* HEADER SURAT */}
+                    {showSurahHeader && surahIndo && (
+                        <div className="mt-10 mb-6 px-2">
+                            <div className="flex items-center justify-between bg-emerald-600 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden">
+                                {/* Pattern Hiasan */}
+                                <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+                                <div className="absolute -left-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+
+                                <div>
+                                    <h2 className="text-xl font-bold font-serif tracking-wide">{surahIndo.name}</h2>
+                                    <p className="text-[10px] text-emerald-100 uppercase tracking-widest mt-1 opacity-90">
+                                        {surahIndo.arti} • {ayat.surah.numberOfAyahs} Ayat
+                                    </p>
+                                </div>
+
+                                {/* Nomor Surat Angka Arab */}
+                                <div className="relative z-10 w-12 h-12 flex items-center justify-center border-2 border-white/30 rounded-full bg-white/10 backdrop-blur-sm">
+                                    <span className="font-lpmq text-2xl pt-1">{toArabicNum(currentSurahNum)}</span>
+                                </div>
+                            </div>
                         </div>
                     )}
 
-                    {/* Card Ayat */}
+                    {/* CARD AYAT */}
                     <div 
-                        className={`p-5 rounded-xl border transition-all mb-4 scroll-mt-32 relative
+                        id={`verse-${ayat.surah.number}-${ayat.numberInSurah}`}
+                        className={`p-4 rounded-xl border transition-all relative scroll-mt-32
                             ${isLastRead 
-                                ? "bg-emerald-50 border-emerald-500 shadow-md ring-1 ring-emerald-500" 
+                                ? "bg-emerald-50/60 border-emerald-500 ring-1 ring-emerald-500 shadow-sm" 
                                 : "bg-white border-gray-100 hover:border-emerald-200"
                             }
                         `} 
-                        // ID DEEP LINKING (Format: verse-{surah}-{ayah})
-                        id={`verse-${ayat.surah.number}-${ayat.numberInSurah}`}
                     >
-                        {isLastRead && (
-                            <div className="absolute -top-3 left-4 bg-emerald-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm z-10">
-                                TERAKHIR DIBACA
-                            </div>
-                        )}
-
-                        <div className="flex justify-between items-start mb-4 gap-4 flex-wrap">
-                            <div className="flex items-center gap-2">
-                                <span className="bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-                                    {surahIndo?.name} : {ayat.numberInSurah}
+                        {/* Header Ayat: Nomor & Tools */}
+                        <div className="flex justify-between items-center mb-4 bg-gray-50/50 p-2 rounded-lg">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center text-xs font-bold border border-emerald-200 shadow-sm">
+                                    {ayat.numberInSurah}
+                                </div>
+                                <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">
+                                    {surahIndo?.name}
                                 </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                {ayat.audio && <VerseAudioPlayer audioUrl={ayat.audio} />}
                                 <BookmarkButton 
                                     juz={juzId}
                                     surah={currentSurahNum}
@@ -171,67 +209,97 @@ export default async function BacaJuzPage({ params }: { params: Promise<{ id: st
                                     isLastRead={isLastRead}
                                 />
                             </div>
+                        </div>
+
+                        {/* --- AREA TEKS ARAB (2 BARIS FIX) --- */}
+                        <div className="mb-2">
                             
-                            {ayat.audio && (
-                                <audio controls className="h-8 w-32 md:w-48 opacity-80" preload="none">
-                                    <source src={ayat.audio} type="audio/mpeg" />
-                                </audio>
+                            {/* BARIS 1: Bismillah (Tengah) - Menggunakan Font Arab LPMQ */}
+                            {bismillah && (
+                                <div className="mb-8 mt-2 text-center border-b border-dashed border-emerald-100 pb-4">
+                                    <p className="font-lpmq text-2xl md:text-3xl text-emerald-800 leading-loose">
+                                        {bismillah}
+                                    </p>
+                                </div>
                             )}
-                        </div>
 
-                        {/* Teks Arab (Bersih dari Bismillah) */}
-                        <div className="text-right mb-6 pl-4 leading-loose">
-                            <p className="text-3xl font-amiri leading-[2.8] text-gray-900 inline" dir="rtl">
-                                {formatAyatText(ayat.text, ayat.surah.number, ayat.numberInSurah)}
-                                <span className="text-emerald-600 text-2xl font-amiri mr-2 select-none">
-                                     &nbsp;﴿{toArabicNum(ayat.numberInSurah)}﴾
-                                </span>
-                            </p>
-                        </div>
-
-                        {/* FITUR BARU: ACCORDION TERJEMAHAN */}
-                        <details className="group border-t border-gray-100 pt-3 mt-3">
-                            <summary className="flex items-center gap-2 text-xs font-medium text-emerald-600 cursor-pointer hover:text-emerald-700 select-none w-fit transition-colors">
-                                <ChevronDown size={14} className="transition-transform group-open:rotate-180" />
-                                <span>Lihat Terjemahan</span>
-                            </summary>
-                            
-                            <div className="mt-3 text-gray-600 leading-relaxed text-sm animate-in fade-in slide-in-from-top-1 duration-200">
-                                <p>{ayat.translation}</p>
+                            {/* BARIS 2: Konten Ayat (Kanan) */}
+                            <div className="text-right pl-2">
+                                <p className="text-3xl md:text-4xl font-lpmq leading-[2.2] md:leading-[2.5] text-gray-800" dir="rtl">
+                                    {content}
+                                    <span className="font-lpmq text-emerald-600 text-3xl mr-2 inline-block select-none">
+                                         ۝{toArabicNum(ayat.numberInSurah)}
+                                    </span>
+                                </p>
                             </div>
-                        </details>
+                        </div>
 
+                        {/* ACCORDION TERJEMAHAN */}
+                        <div className="text-left mt-4 border-t border-gray-50 pt-2">
+                            <details className="group">
+                                <summary className="list-none flex items-center gap-1.5 text-[10px] font-bold text-gray-400 cursor-pointer hover:text-emerald-600 select-none w-fit px-2 py-1 rounded transition-colors focus:outline-none">
+                                    <ChevronDown size={12} className="transition-transform group-open:rotate-180" />
+                                    TERJEMAHAN
+                                </summary>
+                                <div className="mt-2 text-gray-600 leading-relaxed text-sm pl-2 border-l-2 border-emerald-100 animate-in fade-in slide-in-from-top-1">
+                                    {ayat.translation}
+                                </div>
+                            </details>
+                        </div>
+
+                        {isLastRead && (
+                            <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-[9px] font-bold px-3 py-0.5 rounded-full shadow-sm z-10 whitespace-nowrap">
+                                TERAKHIR DIBACA
+                            </div>
+                        )}
                     </div>
                 </div>
             )
         })}
       </div>
 
-      {/* 3. TOMBOL SELESAI (FOOTER) */}
-      <div className="pt-8 border-t border-gray-100 mt-8">
-        <div className="bg-emerald-50 p-6 rounded-2xl text-center mb-6 border border-emerald-100">
-            <h3 className="text-emerald-900 font-bold mb-2 text-xl">Shadaqallahul 'Adzim</h3>
-            <p className="text-emerald-700 text-sm mb-6">Anda telah mencapai akhir Juz {id}.</p>
+      {/* FOOTER: CARD SELESAI JUZ (Lebih Rapi & Compact) */}
+      <div className="pt-8 px-2">
+        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
             
-            {/* Kirim lastAyahData ke tombol */}
-            <FinishJuzButton 
-                juzNumber={juzId} 
-                isCompleted={isCompleted} 
-                lastAyahData={lastAyahData} 
-            />
+            {/* Hiasan Background */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-100/50 rounded-full -mr-10 -mt-10 blur-3xl pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-100/50 rounded-full -ml-10 -mb-10 blur-3xl pointer-events-none"></div>
+            
+            {/* Info Kiri */}
+            <div className="flex items-center gap-4 relative z-10 text-center md:text-left">
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-emerald-600 shadow-sm shrink-0 border border-emerald-100">
+                     <Check size={24} strokeWidth={3} />
+                </div>
+                <div>
+                    <h3 className="text-emerald-900 font-bold text-lg">Alhamdulillah, Selesai Juz {id}!</h3>
+                    <p className="text-emerald-700/80 text-sm mt-1 leading-relaxed max-w-md">
+                        Klik tombol di samping untuk menyimpan progres khatam Anda.
+                    </p>
+                </div>
+            </div>
+            
+            {/* Tombol Kanan (Compact) */}
+            <div className="shrink-0 relative z-10">
+                <FinishJuzButton 
+                    juzNumber={juzId} 
+                    isCompleted={isCompleted} 
+                    lastAyahData={lastAyahData} 
+                />
+            </div>
         </div>
 
-        {/* Navigasi Next/Prev Juz */}
-        <div className="flex justify-between px-2">
+        {/* Navigasi Next/Prev */}
+        <div className="flex justify-between items-center py-8 mt-4 border-t border-gray-50">
             {juzId > 1 ? (
-                <Link href={`/tadarus/juz/${juzId - 1}`} className="px-5 py-2.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-sm font-medium transition-colors">
-                  ← Juz {juzId - 1}
+                <Link href={`/tadarus/juz/${juzId - 1}`} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-xs font-medium transition-colors text-gray-600 shadow-sm">
+                  <ArrowLeft size={14} /> Juz {juzId - 1}
                 </Link>
             ) : <div />} 
             
             {juzId < 30 && (
-                <Link href={`/tadarus/juz/${juzId + 1}`} className="px-5 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 text-sm font-medium shadow-sm transition-colors">
-                  Juz {juzId + 1} →
+                <Link href={`/tadarus/juz/${juzId + 1}`} className="flex items-center gap-2 px-4 py-2 bg-emerald-600 border border-emerald-600 rounded-lg hover:bg-emerald-700 text-xs font-medium transition-colors text-white shadow-md">
+                  Juz {juzId + 1} <ArrowLeft size={14} className="rotate-180" />
                 </Link>
             )}
         </div>
