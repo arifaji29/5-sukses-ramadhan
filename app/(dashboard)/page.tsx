@@ -62,7 +62,7 @@ export default async function DashboardPage() {
                 Assalamu'alaikum, {displayName}! 👋
             </h1>
             <p className="text-emerald-100 text-sm md:text-base leading-relaxed mb-6">
-                "Barangsiapa yang bergembira dengan datangnya bulan Ramadhan, diharamkan Allah jasadnya menyentuh api neraka."
+               Yuk berlomba-lomba dalam kebaikan, perbanyak ibadah, dan maksimalkan pahala di bulan Ramadhan.
             </p>
          </div>
       </div>

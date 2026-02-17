@@ -44,7 +44,7 @@ export default function DashboardLayout({
                 </div>
                 <div>
                     <h1 className="text-lg font-bold text-gray-800 leading-tight">Ramadhan</h1>
-                    <p className="text-[10px] text-gray-400 font-medium tracking-wider">TRACKER</p>
+                    <p className="text-[10px] text-gray-400 font-medium tracking-wider">REMINDER</p>
                 </div>
             </div>
             {/* Close Button Mobile */}
