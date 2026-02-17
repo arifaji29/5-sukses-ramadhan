@@ -14,19 +14,31 @@ function getWIBDate() {
   return new Date(utc + (7 * 3600000)); // UTC + 7 Jam
 }
 
-// --- Helper Component: Card Progress ---
+// --- 1. DEFINISI WARNA (PENTING AGAR TAILWIND TIDAK MENGHAPUS CLASS) ---
+const COLOR_MAP = {
+    orange: { text: "text-orange-500", bg: "bg-orange-500", soft: "bg-orange-500/10" },
+    violet: { text: "text-violet-500", bg: "bg-violet-500", soft: "bg-violet-500/10" },
+    blue:   { text: "text-blue-500",   bg: "bg-blue-500",   soft: "bg-blue-500/10" },
+    yellow: { text: "text-yellow-500", bg: "bg-yellow-500", soft: "bg-yellow-500/10" },
+    green:  { text: "text-green-600",  bg: "bg-green-600",  soft: "bg-green-600/10" },
+};
+
+type ColorTheme = keyof typeof COLOR_MAP;
+
+// --- Helper Component: Card Progress (FIXED) ---
 function ProgressCard({ 
-    href, title, icon: Icon, colorClass, 
+    href, title, icon: Icon, theme, 
     progressValue, progressMax, progressLabel, 
     points, delay 
 }: { 
-    href: string, title: string, icon: any, colorClass: string, 
+    href: string, title: string, icon: any, theme: ColorTheme, 
     progressValue: number, progressMax: number, progressLabel: string,
     points: number, delay: string 
 }) {
     const percent = Math.min(100, Math.round((progressValue / progressMax) * 100)) || 0
-    const bgSoftClass = colorClass.replace('text-', 'bg-') + '/10'
-    const bgBarClass = colorClass.replace('text-', 'bg-')
+    
+    // Ambil class warna dari Map (Dijamin terbaca oleh Tailwind)
+    const colors = COLOR_MAP[theme];
 
     return (
         <Link 
@@ -34,13 +46,17 @@ function ProgressCard({
             className="group relative bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full"
             style={{ animationDelay: delay }}
         >
-            <div className={`absolute top-0 right-0 p-16 opacity-5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110 ${bgBarClass}`} />
+            {/* Background Abstrak */}
+            <div className={`absolute top-0 right-0 p-16 opacity-5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110 ${colors.bg}`} />
             
             <div className="relative z-10 w-full">
                 <div className="flex justify-between items-start mb-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorClass} ${bgSoftClass}`}>
+                    {/* Icon Soft Background */}
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colors.text} ${colors.soft}`}>
                         <Icon size={24} strokeWidth={2.5} />
                     </div>
+                    
+                    {/* Badge Poin */}
                     <div className="bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
                         <Zap size={12} className="fill-yellow-500 text-yellow-500" />
                         {points} Poin
@@ -54,9 +70,11 @@ function ProgressCard({
                         <span>Progress</span>
                         <span className="text-gray-900">{progressLabel}</span>
                     </div>
+                    {/* Bar Background */}
                     <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                        {/* Bar Fill (Warna Utama) */}
                         <div 
-                            className={`h-full rounded-full transition-all duration-1000 ease-out ${bgBarClass}`} 
+                            className={`h-full rounded-full transition-all duration-1000 ease-out ${colors.bg}`} 
                             style={{ width: `${percent}%` }}
                         />
                     </div>
@@ -136,14 +154,12 @@ export default async function DashboardPage() {
       
       {/* SECTION 1: WELCOME BANNER */}
       <div className="bg-linear-to-r from-emerald-600 to-teal-800 rounded-3xl p-6 md:p-8 text-white shadow-2xl relative overflow-hidden">
-         {/* Dekorasi Bintang */}
          <div className="absolute top-0 right-0 -mt-10 -mr-10 opacity-10 pointer-events-none">
             <Star size={300} />
          </div>
 
          <div className="relative z-10">
-             
-             {/* 1. WIDGET TANGGAL (Pojok Kiri Atas) */}
+             {/* 1. WIDGET TANGGAL */}
              <div className="inline-flex bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] md:text-xs font-medium border border-white/10 items-center gap-2 shadow-sm mb-4">
                  <Calendar size={12} className="text-emerald-200" />
                  <span>{masehiDate}</span>
@@ -152,9 +168,7 @@ export default async function DashboardPage() {
                  <span className="font-bold text-yellow-100">{hijriDate}</span>
              </div>
 
-             {/* Container Flex untuk Text dan Score */}
              <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                 
                  {/* 2. TEXT GREETING */}
                  <div className="max-w-lg">
                     <h1 className="text-2xl md:text-3xl font-bold mb-2">
@@ -165,7 +179,7 @@ export default async function DashboardPage() {
                     </p>
                  </div>
 
-                 {/* 3. SCORE CARD (Kanan Bawah pada Desktop / Bawah Text pada Mobile) */}
+                 {/* 3. SCORE CARD */}
                  <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 min-w-37.5 text-center self-end md:self-auto shadow-lg">
                     <div className="text-emerald-200 text-xs font-bold uppercase tracking-widest mb-1">Total Poin</div>
                     <div className="text-4xl font-extrabold text-yellow-300 drop-shadow-sm flex items-center justify-center gap-2">
@@ -189,7 +203,7 @@ export default async function DashboardPage() {
                 href="/puasa"
                 title="1. Sukses Puasa"
                 icon={Sun}
-                colorClass="text-orange-500" 
+                theme="orange" // Menggunakan theme, bukan class manual
                 progressValue={puasaCount}
                 progressMax={30}
                 progressLabel={`${puasaCount} / 30 Hari`}
@@ -200,7 +214,7 @@ export default async function DashboardPage() {
                 href="/tarawih"
                 title="2. Sukses Tarawih"
                 icon={Moon}
-                colorClass="text-violet-500" 
+                theme="violet" 
                 progressValue={tarawihCount}
                 progressMax={30}
                 progressLabel={`${tarawihCount} / 30 Malam`}
@@ -211,7 +225,7 @@ export default async function DashboardPage() {
                 href="/tadarus"
                 title="3. Sukses Tadarus"
                 icon={BookOpen}
-                colorClass="text-blue-500" 
+                theme="blue" 
                 progressValue={juzCompletedCount}
                 progressMax={30}
                 progressLabel={`${juzCompletedCount} / 30 Juz`}
@@ -222,7 +236,7 @@ export default async function DashboardPage() {
                 href="/lailatul-qadar"
                 title="4. Lailatul Qadar"
                 icon={Star}
-                colorClass="text-yellow-500" 
+                theme="yellow" 
                 progressValue={itikafCount}
                 progressMax={10}
                 progressLabel={`${itikafCount} / 10 Malam`}
@@ -233,7 +247,7 @@ export default async function DashboardPage() {
                 href="/zakat"
                 title="5. Sukses Zakat"
                 icon={CheckCircle}
-                colorClass="text-green-600" 
+                theme="green" 
                 progressValue={isZakatPaid ? 1 : 0}
                 progressMax={1}
                 progressLabel={isZakatPaid ? "Sudah Bayar" : "Belum Bayar"}

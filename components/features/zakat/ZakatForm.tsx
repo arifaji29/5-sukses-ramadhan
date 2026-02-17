@@ -35,7 +35,6 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
 
   // --- TAMPILAN JIKA SUDAH LUNAS ---
   if (data?.is_paid) {
-    // LOGIKA PENTING: Cek 'beras' tanpa peduli huruf besar/kecil
     const method = data.payment_method?.toLowerCase() || ''
     const isBeras = method === 'beras' || method.includes('beras')
 
@@ -62,9 +61,8 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
                 <div className="flex justify-between items-center border-b border-gray-200 pb-3">
                     <span className="text-gray-500 font-medium">Bentuk Zakat</span>
                     <span className="font-bold text-gray-800 capitalize flex items-center gap-2">
-                        {/* Tampilkan Ikon & Teks sesuai isBeras */}
                         {isBeras ? <Package size={16} className="text-emerald-500" /> : <Wallet size={16} className="text-emerald-500" />}
-                        {isBeras ? 'Beras 1 Sha (2.7 Kg)' : 'Titip Uang'}
+                        {isBeras ? 'Beras (2.7 Kg)' : 'Titip Uang'}
                     </span>
                 </div>
                 <div className="flex justify-between items-center border-b border-gray-200 pb-3">
@@ -75,7 +73,8 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
                 {data.proof_url && (
                     <div className="pt-2">
                         <span className="text-gray-500 font-medium block mb-2">Bukti Foto:</span>
-                        <div className="relative h-48 w-full rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
+                        {/* UPDATE: Rasio 4:5 untuk foto detail */}
+                        <div className="relative aspect-4/5 w-full max-w-xs mx-auto rounded-lg overflow-hidden border border-gray-200 bg-gray-100 shadow-md">
                             <Image 
                                 src={data.proof_url} 
                                 alt="Bukti Zakat" 
@@ -99,7 +98,7 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
     )
   }
 
-  // --- TAMPILAN FORM BAYAR (BELUM LUNAS) ---
+  // --- TAMPILAN FORM BAYAR ---
   return (
     <form action={saveZakatProgress} className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 space-y-8">
         
@@ -120,7 +119,7 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
                         <div className="bg-gray-100 peer-checked:bg-emerald-100 p-3 rounded-full transition-colors">
                              <Package className="text-gray-400 peer-checked:text-emerald-600" size={24} />
                         </div>
-                        <span className="text-sm font-bold text-gray-600 peer-checked:text-emerald-800">Beras 1 Sha (2.7kg)</span>
+                        <span className="text-sm font-bold text-gray-600 peer-checked:text-emerald-800">Beras (2.7 Kg)</span>
                         <div className="absolute top-3 right-3 opacity-0 peer-checked:opacity-100 text-emerald-500 transition-opacity">
                             <CheckCircle size={16} className="fill-emerald-500 text-white"/>
                         </div>
@@ -153,10 +152,10 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
             />
         </div>
 
-        {/* Upload Foto */}
+        {/* Upload Foto (Update Rasio 4:5 di Preview Form) */}
         <div className="space-y-2">
             <label className="text-sm font-bold text-gray-700 block uppercase tracking-wider">Foto Bukti (Opsional)</label>
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 hover:border-emerald-400 transition-all relative group cursor-pointer bg-gray-50/50">
+            <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 hover:border-emerald-400 transition-all relative group cursor-pointer bg-gray-50/50 flex flex-col items-center justify-center min-h-50">
                 <input 
                     type="file" 
                     name="proof" 
@@ -166,7 +165,8 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
                 />
                 
                 {preview ? (
-                    <div className="relative h-48 w-full mx-auto rounded-lg overflow-hidden shadow-sm">
+                    // UPDATE: Rasio 4:5 agar tidak gepeng
+                    <div className="relative aspect-4/5 w-full max-w-50 rounded-lg overflow-hidden shadow-md border border-gray-200">
                         <Image src={preview} alt="Preview" fill className="object-cover" />
                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
                             <p className="text-white text-sm font-medium flex items-center gap-2">
@@ -181,7 +181,7 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
                         </div>
                         <div className="text-center">
                             <p className="text-sm font-medium text-gray-600 group-hover:text-emerald-600 transition-colors">Klik untuk upload foto</p>
-                            <p className="text-xs text-gray-400 mt-1">Struk / Foto Serah Terima</p>
+                            <p className="text-xs text-gray-400 mt-1">Format: Potret / Tegak (4:5)</p>
                         </div>
                     </div>
                 )}
