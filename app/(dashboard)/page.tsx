@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation" // Import redirect
 import Link from "next/link"
 import { Sun, Moon, BookOpen, Star, CheckCircle, ArrowRight } from "lucide-react"
 
@@ -14,6 +15,7 @@ function MenuCard({
             className="group relative bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
             style={{ animationDelay: delay }}
         >
+            {/* Background Icon Decoration */}
             <div className={`absolute top-0 right-0 p-20 opacity-5 rounded-full -mr-10 -mt-10 transition-transform group-hover:scale-110 ${colorClass.replace('text-', 'bg-')}`} />
             
             <div className="relative z-10">
@@ -33,7 +35,14 @@ function MenuCard({
 
 export default async function DashboardPage() {
   const supabase = await createClient()
+  
+  // Ambil data user
   const { data: { user } } = await supabase.auth.getUser()
+
+  // PROTEKSI HALAMAN: Redirect ke login jika user belum login
+  if (!user) {
+    redirect('/login')
+  }
 
   // Ambil Nama User (Opsional, ambil dari email jika metadata kosong)
   const displayName = user?.user_metadata?.username || user?.email?.split('@')[0] || "Hamba Allah"
@@ -50,7 +59,7 @@ export default async function DashboardPage() {
          
          <div className="relative z-10 max-w-2xl">
             <h1 className="text-2xl md:text-4xl font-bold mb-2">
-                Assalamu'alaikum , {displayName}!
+                Assalamu'alaikum, {displayName}! 👋
             </h1>
             <p className="text-emerald-100 text-sm md:text-base leading-relaxed mb-6">
                 "Barangsiapa yang bergembira dengan datangnya bulan Ramadhan, diharamkan Allah jasadnya menyentuh api neraka."
