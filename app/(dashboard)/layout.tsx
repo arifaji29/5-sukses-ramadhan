@@ -116,7 +116,7 @@ export default function DashboardLayout({
         <header className="bg-white border-b border-gray-200 p-4 flex items-center justify-between md:hidden z-20 sticky top-0">
             <div className="flex items-center gap-3">
                  <div className="w-8 h-8 bg-linear-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">
-                    5S
+                    5SR
                 </div>
                 <h1 className="font-bold text-gray-800">5 Sukses Ramadhan</h1>
             </div>
