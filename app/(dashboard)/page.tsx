@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { Sun, Moon, BookOpen, Star, CheckCircle, Trophy, ArrowRight, Zap, Calendar } from "lucide-react"
+import { Sun, Moon, BookOpen, Star, CheckCircle, Trophy, ArrowRight, Zap, Calendar, Medal, User } from "lucide-react"
 import { 
     getCurrentRamadhanDay, 
     RAMADHAN_DAYS_TOTAL 
@@ -29,11 +29,11 @@ type ColorTheme = keyof typeof COLOR_MAP;
 function ProgressCard({ 
     href, title, icon: Icon, theme, 
     progressValue, progressMax, progressLabel, 
-    points, delay 
+    points, delay, extraBadge 
 }: { 
     href: string, title: string, icon: any, theme: ColorTheme, 
     progressValue: number, progressMax: number, progressLabel: string,
-    points: number, delay: string 
+    points: number, delay: string, extraBadge?: React.ReactNode 
 }) {
     const percent = Math.min(100, Math.round((progressValue / progressMax) * 100)) || 0
     const colors = COLOR_MAP[theme];
@@ -52,9 +52,12 @@ function ProgressCard({
                         <Icon size={24} strokeWidth={2.5} />
                     </div>
                     
-                    <div className="bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
-                        <Zap size={12} className="fill-yellow-500 text-yellow-500" />
-                        {points} Poin
+                    <div className="flex items-center gap-2">
+                        {extraBadge}
+                        <div className="bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm h-fit">
+                            <Zap size={12} className="fill-yellow-500 text-yellow-500" />
+                            {points}
+                        </div>
                     </div>
                 </div>
 
@@ -90,6 +93,13 @@ export default async function DashboardPage() {
   }
 
   // --- 1. FETCH DATA ---
+  // Ambil Data Profil (Username & Avatar)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('username, avatar_url')
+    .eq('id', user.id)
+    .single()
+
   const { data: puasaData } = await supabase.from('puasa_progress').select('is_fasting').eq('user_id', user.id).eq('is_fasting', true)
   const { data: tarawihData } = await supabase.from('tarawih_progress').select('location').eq('user_id', user.id)
   const { data: quranData } = await supabase.from('quran_progress').select('completion_count').eq('user_id', user.id)
@@ -97,13 +107,10 @@ export default async function DashboardPage() {
   const { data: itikafData } = await supabase.from('lailatul_qadar_progress').select('night_number, is_itikaf').eq('user_id', user.id).eq('is_itikaf', true)
   const { data: zakatData } = await supabase.from('zakat_fitrah_progress').select('is_paid').eq('user_id', user.id).single()
 
-  // --- 2. LOGIKA POIN BARU ---
-
-  // A. Puasa (1x = 3 Poin)
+  // --- 2. LOGIKA POIN ---
   const puasaCount = puasaData?.length || 0
   const puasaPoints = puasaCount * 3
 
-  // B. Tarawih (Masjid=2, Rumah=1)
   let tarawihPoints = 0
   const tarawihCount = tarawihData?.length || 0
   tarawihData?.forEach((t) => {
@@ -115,20 +122,13 @@ export default async function DashboardPage() {
       }
   })
 
-  // C. Tadarus (FIX LOGIC)
-  // Aturan: 1 Juz = 5 Poin, Bonus Khatam = 3 Poin.
-  // Total 1 Khatam = (30 Juz * 5) + 3 Bonus = 153 Poin.
   const juzCompletedCount = quranData?.filter(q => q.completion_count > 0).length || 0
   const khatamCount = userSettings?.total_khatam_count || 0
   
-  // Poin dari Riwayat Khatam (153 poin per khatam)
   const pointsFromHistory = khatamCount * 153; 
-  // Poin dari Juz yang sedang berjalan (belum khatam lagi)
   const pointsFromCurrent = juzCompletedCount * 5;
-  
   const tadarusPoints = pointsFromHistory + pointsFromCurrent;
 
-  // D. I'tikaf (Ganjil=4, Genap=2)
   let itikafPoints = 0
   const itikafCount = itikafData?.length || 0
   itikafData?.forEach((i) => {
@@ -136,13 +136,14 @@ export default async function DashboardPage() {
       itikafPoints += (isOdd ? 4 : 2)
   })
 
-  // E. Zakat (Lunas = 30 Poin)
   const isZakatPaid = zakatData?.is_paid || false
   const zakatPoints = isZakatPaid ? 30 : 0
 
-  // Total Global
   const totalGlobalPoints = puasaPoints + tarawihPoints + tadarusPoints + itikafPoints + zakatPoints
-  const displayName = user?.user_metadata?.username || user?.email?.split('@')[0] || "Hamba Allah"
+  
+  // Display Name & Avatar Logic
+  const displayName = profile?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || "Hamba Allah"
+  const avatarUrl = profile?.avatar_url
 
   // --- 3. LOGIKA TANGGAL ---
   const nowWIB = getWIBDate();
@@ -167,13 +168,37 @@ export default async function DashboardPage() {
          </div>
 
          <div className="relative z-10">
-             {/* WIDGET TANGGAL */}
-             <div className="inline-flex bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] md:text-xs font-medium border border-white/10 items-center gap-2 shadow-sm mb-4">
-                 <Calendar size={12} className="text-emerald-200" />
-                 <span>{masehiDate}</span>
-                 <span className="text-white/20">|</span>
-                 <Moon size={12} className="text-yellow-300 fill-yellow-300" />
-                 <span className="font-bold text-yellow-100">{hijriDate}</span>
+             
+             {/* BARIS ATAS: WIDGET TANGGAL & AVATAR */}
+             <div className="flex justify-between items-start mb-4">
+                 
+                 {/* Widget Tanggal */}
+                 <div className="inline-flex bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] md:text-xs font-medium border border-white/10 items-center gap-2 shadow-sm">
+                     <Calendar size={12} className="text-emerald-200" />
+                     <span>{masehiDate}</span>
+                     <span className="text-white/20">|</span>
+                     <Moon size={12} className="text-yellow-300 fill-yellow-300" />
+                     <span className="font-bold text-yellow-100">{hijriDate}</span>
+                 </div>
+
+                 {/* --- AVATAR PROFIL (BARU) --- */}
+                 <Link href="/profile" className="group relative">
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-white/30 bg-white/10 flex items-center justify-center overflow-hidden shadow-lg transition-transform group-hover:scale-105 group-hover:border-white">
+                        {avatarUrl ? (
+                            <img src={avatarUrl} alt="Profil" className="w-full h-full object-cover" />
+                        ) : (
+                            <User size={20} className="text-white/80" />
+                        )}
+                    </div>
+                    {/* Badge Edit Kecil */}
+                    <div className="absolute -bottom-1 -right-1 bg-yellow-400 text-yellow-900 rounded-full p-0.5 border border-white shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                          <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
+                          <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
+                        </svg>
+                    </div>
+                 </Link>
+
              </div>
 
              <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
@@ -239,6 +264,12 @@ export default async function DashboardPage() {
                 progressLabel={`${juzCompletedCount} / 30 Juz`}
                 points={tadarusPoints}
                 delay="200ms"
+                extraBadge={khatamCount > 0 ? (
+                    <div className="bg-blue-100 text-blue-700 border border-blue-200 px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm h-fit">
+                        <Medal size={12} />
+                        {khatamCount}x Khatam
+                    </div>
+                ) : null}
             />
              <ProgressCard 
                 href="/lailatul-qadar"
