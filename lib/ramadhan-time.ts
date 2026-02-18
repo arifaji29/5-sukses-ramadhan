@@ -1,7 +1,7 @@
 // src/lib/ramadhan-time.ts
 
 // Sesuaikan tanggal mulai sesuai keinginan (contoh: 17 Februari 2026)
-export const RAMADHAN_START_DATE_STR = "2026-02-17T00:00:00"; 
+export const RAMADHAN_START_DATE_STR = "2026-02-19T00:00:00"; 
 
 export const RAMADHAN_START = new Date(RAMADHAN_START_DATE_STR);
 export const RAMADHAN_DAYS_TOTAL = 30;
