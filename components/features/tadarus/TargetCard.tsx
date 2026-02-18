@@ -1,25 +1,24 @@
 'use client'
 
 import { updateKhatamTarget } from "@/app/(dashboard)/tadarus/actions"
-import { Target, Trophy, Flame, Loader2, CheckCircle, AlertCircle } from "lucide-react"
+import { Target, Trophy, Flame, Loader2, CheckCircle, AlertCircle, Medal } from "lucide-react"
 import { useState, useTransition } from "react"
 import { getCurrentRamadhanDay, RAMADHAN_DAYS_TOTAL } from "@/lib/ramadhan-time" 
 
 interface TargetCardProps {
   currentTarget: number
   juzCompletedToday: number 
-  totalReadGlobal: number 
+  totalReadGlobal: number
+  khatamCount: number // UPDATE: Tambahkan prop ini
 }
 
-export default function TargetCard({ currentTarget, juzCompletedToday, totalReadGlobal }: TargetCardProps) {
+export default function TargetCard({ currentTarget, juzCompletedToday, totalReadGlobal, khatamCount }: TargetCardProps) {
   const [isPending, startTransition] = useTransition()
   const [target, setTarget] = useState(currentTarget)
   
   // 1. AMBIL HARI REALTIME
   const currentDay = getCurrentRamadhanDay()
   const safeDay = Math.max(1, Math.min(currentDay, RAMADHAN_DAYS_TOTAL))
-
-  // (Bagian Date/Tanggal dihapus agar tidak double dengan Header)
 
   const handleTargetChange = (newTarget: number) => {
     setTarget(newTarget)
@@ -28,7 +27,7 @@ export default function TargetCard({ currentTarget, juzCompletedToday, totalRead
     })
   }
 
-  // ================= LOGIKA TABUNGAN / UTANG (OTOMATIS) =================
+  // ================= LOGIKA TABUNGAN / UTANG =================
   const TOTAL_TARGET_JUZ = target * RAMADHAN_DAYS_TOTAL 
 
   // Target Ideal per Hari ini
@@ -50,23 +49,30 @@ export default function TargetCard({ currentTarget, juzCompletedToday, totalRead
   // ===========================================================
 
   return (
-    // UBAH TEMA WARNA: Emerald -> Sky/Blue
     <div className="bg-linear-to-br from-sky-600 to-blue-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
       
       <div className="absolute top-0 right-0 p-4 opacity-10">
         <Target size={120} />
       </div>
 
-      {/* WIDGET TANGGAL SUDAH DIHAPUS DI SINI */}
-
       <div className="relative z-10 flex flex-col md:flex-row justify-between gap-6 items-start mt-2 md:mt-0">
         
-        {/* Bagian Kiri: Info Target */}
+        {/* Bagian Kiri: Info Target & Khatam */}
         <div className="space-y-4 flex-1 w-full pt-2 md:pt-0">
             <div>
-                <h2 className="text-sky-100 font-medium text-sm flex items-center gap-2 mb-1">
-                    <Trophy size={16} /> Pilih Target Khatam
-                </h2>
+                {/* UPDATE: Header dengan Badge Jumlah Khatam */}
+                <div className="flex items-center justify-between md:justify-start gap-4 mb-2">
+                    <h2 className="text-sky-100 font-medium text-sm flex items-center gap-2">
+                        <Target size={16} /> Pilih Target
+                    </h2>
+                    
+                    {/* BADGE JUMLAH KHATAM */}
+                    <div className="bg-yellow-400/20 backdrop-blur-md border border-yellow-400/30 text-yellow-200 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                        <Medal size={14} className="text-yellow-400" />
+                        <span>Sudah Khatam: {khatamCount}x</span>
+                    </div>
+                </div>
+
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                     <h3 className="text-3xl font-bold min-w-35">
                         {target}x Khatam
@@ -81,7 +87,7 @@ export default function TargetCard({ currentTarget, juzCompletedToday, totalRead
                                 disabled={isPending}
                                 className={`w-8 h-8 rounded-md text-sm font-bold transition-all flex items-center justify-center
                                     ${target === num 
-                                        ? "bg-white text-blue-900 shadow-sm scale-110" // Text Active jadi Biru Tua
+                                        ? "bg-white text-blue-900 shadow-sm scale-110" 
                                         : "text-sky-100 hover:bg-white/10"
                                     }
                                 `}
@@ -95,17 +101,15 @@ export default function TargetCard({ currentTarget, juzCompletedToday, totalRead
                 {/* Status Global */}
                 <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
                     {gap >= -0.5 ? (
-                         // Warna Status: Sky Blue
                          <div className="flex items-center gap-2 bg-sky-500/30 px-3 py-1.5 rounded-full border border-sky-400/30 text-sky-50">
                             <CheckCircle size={16} className="text-sky-300" />
                             <span className="font-medium">Progress Sesuai Jadwal (On Track)</span>
                          </div>
                     ) : (
-                        // Warna Warning: Tetap Merah/Pink agar kontras alert
                         <div className="flex items-center gap-2 bg-pink-500/30 px-3 py-1.5 rounded-full border border-pink-400/30 text-pink-50">
                             <AlertCircle size={16} className="text-pink-300 shrink-0" />
                             <span className="font-medium text-xs md:text-sm">
-                                Ayo kejar ketertinggalan, agar misi harian makin ringan!
+                                Ayo kejar ketertinggalan!
                             </span>
                          </div>
                     )}
@@ -136,7 +140,6 @@ export default function TargetCard({ currentTarget, juzCompletedToday, totalRead
             ) : (
                 <div>
                     <div className="flex justify-center mb-2">
-                        {/* Ikon Api: Warna Pink jika tertinggal, Orange jika normal */}
                         <div className={`p-2 rounded-full border ${gap < -0.5 ? "bg-pink-500/20 text-pink-200 border-pink-500/30" : "bg-orange-500/20 text-orange-200 border-orange-500/30"}`}>
                             <Flame size={24} className={gap < -0.5 ? "animate-pulse" : ""} />
                         </div>

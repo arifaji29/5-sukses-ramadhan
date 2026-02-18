@@ -6,7 +6,6 @@ import TargetCard from "@/components/features/tadarus/TargetCard"
 import ResetButton from "@/components/features/tadarus/ResetButton" 
 import RestartButton from "@/components/features/tadarus/RestartButton"
 import { 
-    RAMADHAN_START_DATE_STR, 
     getCurrentRamadhanDay, 
     RAMADHAN_DAYS_TOTAL 
 } from "@/lib/ramadhan-time"
@@ -40,7 +39,6 @@ export default async function TadarusPage() {
   const historyKhatam = settings?.total_khatam_count || 0
 
   // 3. HITUNG JUMLAH JUZ SELESAI HARI INI (Untuk Misi Harian)
-  // GUNAKAN WAKTU WIB AGAR AKURAT
   const nowWIB = getWIBDate();
   const todayISO = nowWIB.toISOString().split('T')[0] // Format YYYY-MM-DD sesuai WIB
   
@@ -108,19 +106,13 @@ export default async function TadarusPage() {
                 </h1>
                 <div className="flex items-center gap-2 mt-1 text-sky-100 text-xs md:text-sm">
                    <p>Raih pahala berlipat ganda dengan membaca Al-Qur'an.</p>
-                   {/* Badge Riwayat Khatam Kecil */}
-                   {historyKhatam > 0 && (
-                       <span className="bg-yellow-400/20 text-yellow-100 px-2 py-0.5 rounded text-[10px] font-bold border border-yellow-400/30 flex items-center gap-1">
-                          <Trophy size={10} /> {historyKhatam}x Khatam
-                       </span>
-                   )}
                 </div>
             </div>
 
             {/* HADITS TENTANG AL-QURAN */}
             <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3 md:p-5 border border-white/10 max-w-2xl">
                 <p className="text-lg md:text-2xl font-serif text-right mb-2 leading-loose text-yellow-100">
-                   مَنْ قَرَأَ حَرْفًا مِنْ كِتَابِ اللَّهِ فَلَهُ بِهِ حَسَنَةٌ وَالْحَسَنَةُ بِعَشْرِ أَمْثَالِهَا لَا أَقُولُ الم حَرْفٌ وَلَكِنْ أَلِفٌ حَرْفٌ وَلَامٌ حَرْفٌ وَمِيمٌ حَرْفٌ
+                    مَنْ قَرَأَ حَرْفًا مِنْ كِتَابِ اللَّهِ فَلَهُ بِهِ حَسَنَةٌ وَالْحَسَنَةُ بِعَشْرِ أَمْثَالِهَا لَا أَقُولُ الم حَرْفٌ وَلَكِنْ أَلِفٌ حَرْفٌ وَلَامٌ حَرْفٌ وَمِيمٌ حَرْفٌ
                 </p>
                 <p className="text-[10px] md:text-sm text-sky-50 italic leading-relaxed">
                    “Barangsiapa yang membaca satu huruf dari kitab Allah (Al Qur’an), maka ia akan mendapatkan satu kebaikan dengan huruf itu, dan satu kebaikan akan dilipatgandakan menjadi sepuluh. Aku tidaklah mengatakan Alif Laam Miim itu satu huruf, tetapi alif satu huruf, lam satu huruf dan Mim satu huruf.”
@@ -130,11 +122,12 @@ export default async function TadarusPage() {
         </div>
       </div>
 
-      {/* 2. Kartu Target (Warna & Logika Baru) */}
+      {/* 2. Kartu Target (Sekarang menerima khatamCount) */}
       <TargetCard 
         currentTarget={khatamTarget} 
         juzCompletedToday={juzCompletedToday}
         totalReadGlobal={totalReadGlobal} 
+        khatamCount={historyKhatam} // UPDATE: Kirim data khatam ke sini
       />
 
       {/* 3. Grid 30 Juz */}
