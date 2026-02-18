@@ -109,7 +109,7 @@ export default function TargetCard({ currentTarget, juzCompletedToday, totalRead
                         <div className="flex items-center gap-2 bg-pink-500/30 px-3 py-1.5 rounded-full border border-pink-400/30 text-pink-50">
                             <AlertCircle size={16} className="text-pink-300 shrink-0" />
                             <span className="font-medium text-xs md:text-sm">
-                                Ayo kejar ketertinggalan!
+                                Ayo kejar ketertinggalan! agar misi harian makin ringan
                             </span>
                          </div>
                     )}

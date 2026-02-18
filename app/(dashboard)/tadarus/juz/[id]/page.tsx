@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server"
 import BookmarkButton from "@/components/features/tadarus/BookmarkButton" 
 import FinishJuzButton from "@/components/features/tadarus/FinishJuzButton" 
 import VerseAudioPlayer from "@/components/features/tadarus/VerseAudioPlayer"
+import KhatamPopup from "@/components/features/tadarus/KhatamPopup" // <--- 1. IMPORT POPUP
 
 interface Ayah {
   number: number;
@@ -49,7 +50,7 @@ async function getJuzData(id: string) {
   }
 }
 
-// 2. Helper: Memisahkan Bismillah (LOGIKA BARU: CARI KATA KUNCI)
+// 2. Helper: Memisahkan Bismillah (LOGIKA TETAP SESUAI PERMINTAAN)
 const splitBismillah = (text: string, surahNumber: number, verseNumber: number) => {
     // Skip Al-Fatihah (1) & At-Taubah (9)
     if (surahNumber === 1 || surahNumber === 9 || verseNumber !== 1) {
@@ -57,7 +58,6 @@ const splitBismillah = (text: string, surahNumber: number, verseNumber: number) 
     }
     
     // STRATEGI: Cari kata terakhir dari Bismillah ("Ar-Rahim")
-    // Kita cek 2 variasi penulisan umum untuk jaga-jaga
     const targets = ["ٱلرَّحِيمِ", "الرحيم"]; 
     
     for (const target of targets) {
@@ -97,6 +97,7 @@ export default async function BacaJuzPage({ params }: { params: Promise<{ id: st
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
+  // --- A. FETCH PROGRESS PER JUZ (YANG SUDAH ADA) ---
   const { data: progress } = await supabase
     .from('quran_progress')
     .select('last_read_surah, last_read_ayah, completion_count') 
@@ -104,7 +105,26 @@ export default async function BacaJuzPage({ params }: { params: Promise<{ id: st
     .eq('juz_number', juzId)
     .single()
 
+  // --- B. FETCH PROGRESS GLOBAL (TAMBAHAN UTK POPUP) ---
+  // Hitung berapa juz yang sudah selesai (completion_count > 0)
+  const { count: totalCompletedCount } = await supabase
+    .from('quran_progress')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user?.id)
+    .gt('completion_count', 0)
+
+  // --- C. FETCH DATA KHATAM HISTORY (TAMBAHAN UTK POPUP) ---
+  const { data: settings } = await supabase
+    .from('user_settings')
+    .select('total_khatam_count') 
+    .eq('user_id', user?.id)
+    .single()
+
   const isCompleted = (progress?.completion_count || 0) > 0;
+  
+  // LOGIKA KHATAM: Jika total juz selesai >= 30, tampilkan popup
+  const isKhatamGlobal = (totalCompletedCount || 0) >= 30; 
+  const historyKhatam = settings?.total_khatam_count || 0;
 
   if (!ayahs) {
     return (
@@ -122,8 +142,14 @@ export default async function BacaJuzPage({ params }: { params: Promise<{ id: st
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-3 pb-24"> {/* Space antar card dikurangi jadi space-y-3 */}
+    <div className="max-w-4xl mx-auto space-y-3 pb-24"> 
       
+      {/* --- 3. PASANG POPUP DI SINI --- */}
+      <KhatamPopup 
+         isOpen={isKhatamGlobal} 
+         khatamCountNext={historyKhatam} 
+      />
+
       {/* Header Sticky */}
       <div className="bg-white/90 backdrop-blur-md px-4 py-3 rounded-xl shadow-sm border border-gray-100 sticky top-0 z-20 flex items-center gap-4">
         <Link href="/tadarus" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
@@ -145,7 +171,7 @@ export default async function BacaJuzPage({ params }: { params: Promise<{ id: st
                 progress?.last_read_surah === currentSurahNum && 
                 progress?.last_read_ayah === ayat.numberInSurah;
 
-            // Proses pemisahan Bismillah
+            // Proses pemisahan Bismillah (TETAP SAMA)
             const { bismillah, content } = splitBismillah(ayat.text, currentSurahNum, ayat.numberInSurah);
 
             return (
@@ -181,7 +207,7 @@ export default async function BacaJuzPage({ params }: { params: Promise<{ id: st
                         </div>
                     )}
 
-                    {/* 3. CARD AYAT (COMPACT) */}
+                    {/* 3. CARD AYAT (COMPACT - FONT TETAP SAMA) */}
                     <div 
                         id={`verse-${ayat.surah.number}-${ayat.numberInSurah}`}
                         className={`p-3 rounded-xl border transition-all relative scroll-mt-32
@@ -213,10 +239,10 @@ export default async function BacaJuzPage({ params }: { params: Promise<{ id: st
                             </div>
                         </div>
 
-                        {/* --- AREA TEKS ARAB (Compact Font & Leading) --- */}
+                        {/* --- AREA TEKS ARAB (Compact Font & Leading TETAP) --- */}
                         <div className="text-right pl-1">
                             {/* Font size: text-xl md:text-2xl (Lebih kecil) */}
-                            {/* Leading: leading-relaxed (Lebih rapat dari loose) */}
+                            {/* Leading: leading-relaxed (Lebih rapat) */}
                             <p className="text-xl md:text-2xl font-lpmq leading-relaxed text-gray-800" dir="rtl">
                                 {content}
                                 <span className="font-lpmq text-emerald-600 text-xl mr-1 inline-block select-none">
@@ -259,7 +285,7 @@ export default async function BacaJuzPage({ params }: { params: Promise<{ id: st
                 <div>
                     <p className="text-emerald-900 font-bold text-sm">Alhamdulillah, Selesai Juz {id}!</p>
                     <p className="text-emerald-700/80 text-[10px] leading-tight max-w-50">
-                        Klik tombol di samping untuk menyimpan progres.
+                        Klik tombol untuk menyimpan progres juz.
                     </p>
                 </div>
             </div>

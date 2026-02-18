@@ -5,13 +5,14 @@ import JuzItem from "@/components/features/tadarus/JuzItem"
 import TargetCard from "@/components/features/tadarus/TargetCard" 
 import ResetButton from "@/components/features/tadarus/ResetButton" 
 import RestartButton from "@/components/features/tadarus/RestartButton"
+import KhatamPopup from "@/components/features/tadarus/KhatamPopup" // <--- 1. IMPORT PENTING
 import { 
     getCurrentRamadhanDay, 
     RAMADHAN_DAYS_TOTAL 
 } from "@/lib/ramadhan-time"
 import { BookOpen, Trophy, Calendar, Moon, Star } from "lucide-react"
 
-// --- Helper Waktu WIB (PENTING: Agar sinkron dengan server) ---
+// --- Helper Waktu WIB ---
 function getWIBDate() {
   const now = new Date();
   const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
@@ -38,57 +39,56 @@ export default async function TadarusPage() {
   const khatamTarget = settings?.khatam_target || 1 
   const historyKhatam = settings?.total_khatam_count || 0
 
-  // 3. HITUNG JUMLAH JUZ SELESAI HARI INI (Untuk Misi Harian)
+  // 3. HITUNG JUMLAH JUZ SELESAI HARI INI
   const nowWIB = getWIBDate();
-  const todayISO = nowWIB.toISOString().split('T')[0] // Format YYYY-MM-DD sesuai WIB
+  const todayISO = nowWIB.toISOString().split('T')[0] 
   
   const juzCompletedToday = progress?.filter(p => {
-    // Syarat: Sudah selesai (count > 0) DAN waktu update terakhir adalah hari ini
     if (!p.completion_count || p.completion_count < 1) return false
     if (!p.last_read_at) return false
     
-    // Konversi waktu database (UTC) ke WIB dulu sebelum dibandingkan
     const dbDate = new Date(p.last_read_at);
     const dbUtc = dbDate.getTime() + (dbDate.getTimezoneOffset() * 60000);
     const dbWib = new Date(dbUtc + (7 * 3600000));
-    
     const completedDateISO = dbWib.toISOString().split('T')[0];
     
     return completedDateISO === todayISO
   }).length || 0
 
-  // 4. HITUNG TOTAL GLOBAL (Riwayat Khatam + Progress Saat Ini)
+  // 4. HITUNG TOTAL GLOBAL & LOGIKA KHATAM
   const currentProgressCount = progress?.filter(p => p.completion_count > 0).length || 0
   const totalReadGlobal = (historyKhatam * 30) + currentProgressCount
 
-  // 5. WIDGET TANGGAL & WAKTU (Gunakan nowWIB)
+  // --- LOGIKA POPUP: Muncul jika sudah baca 30 Juz (atau lebih) ---
+  const isKhatamCurrentPeriod = currentProgressCount >= 30;
+
+  // 5. WIDGET TANGGAL
   const currentRamadhanDay = getCurrentRamadhanDay()
   const safeDay = Math.max(1, Math.min(currentRamadhanDay, RAMADHAN_DAYS_TOTAL))
   
   const masehiDate = nowWIB.toLocaleDateString("id-ID", {
-      weekday: 'short', 
-      day: 'numeric', 
-      month: 'short', 
-      year: 'numeric'
+      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
   })
   const hijriDate = `${safeDay} Ramadhan`
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20">
       
-      {/* 1. HEADER DASHBOARD (Tema Biru + Hadits + Tanggal) */}
+      {/* --- 2. KOMPONEN POPUP DIPASANG DI SINI --- */}
+      <KhatamPopup 
+         isOpen={isKhatamCurrentPeriod} 
+         khatamCountNext={historyKhatam} 
+      />
+
+      {/* HEADER DASHBOARD */}
       <div className="bg-linear-to-br from-sky-500 to-blue-900 rounded-2xl p-5 md:p-8 text-white shadow-xl relative overflow-hidden flex flex-col">
-        
-        {/* Hiasan Background */}
         <div className="absolute -bottom-10 right-0 opacity-10 pointer-events-none">
             <BookOpen size={240} />
         </div>
-        {/* Tambahan hiasan bintang agar senada */}
         <div className="absolute top-10 right-20 opacity-20 pointer-events-none animate-pulse">
             <Star size={40} />
         </div>
         
-        {/* WIDGET TANGGAL COMPACT (Pojok Kanan Atas) */}
         <div className="flex justify-end w-full mb-4 md:mb-0 md:absolute md:top-6 md:right-6 z-20">
              <div className="bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] md:text-xs font-medium border border-white/10 flex items-center gap-2 shadow-sm">
                  <Calendar size={12} className="text-sky-100" />
@@ -109,28 +109,27 @@ export default async function TadarusPage() {
                 </div>
             </div>
 
-            {/* HADITS TENTANG AL-QURAN */}
             <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3 md:p-5 border border-white/10 max-w-2xl">
                 <p className="text-lg md:text-2xl font-serif text-right mb-2 leading-loose text-yellow-100">
                     مَنْ قَرَأَ حَرْفًا مِنْ كِتَابِ اللَّهِ فَلَهُ بِهِ حَسَنَةٌ وَالْحَسَنَةُ بِعَشْرِ أَمْثَالِهَا لَا أَقُولُ الم حَرْفٌ وَلَكِنْ أَلِفٌ حَرْفٌ وَلَامٌ حَرْفٌ وَمِيمٌ حَرْفٌ
                 </p>
                 <p className="text-[10px] md:text-sm text-sky-50 italic leading-relaxed">
-                   “Barangsiapa yang membaca satu huruf dari kitab Allah (Al Qur’an), maka ia akan mendapatkan satu kebaikan dengan huruf itu, dan satu kebaikan akan dilipatgandakan menjadi sepuluh. Aku tidaklah mengatakan Alif Laam Miim itu satu huruf, tetapi alif satu huruf, lam satu huruf dan Mim satu huruf.”
+                   “Barangsiapa yang membaca satu huruf dari kitab Allah (Al Qur’an), maka ia akan mendapatkan satu kebaikan dengan huruf itu, dan satu kebaikan akan dilipatgandakan menjadi sepuluh...”
                     <span className="font-bold not-italic ml-1 text-white block md:inline md:ml-1 mt-1 md:mt-0">(HR. Tirmidzi)</span>
                 </p>
             </div>
         </div>
       </div>
 
-      {/* 2. Kartu Target (Sekarang menerima khatamCount) */}
+      {/* Target Card */}
       <TargetCard 
         currentTarget={khatamTarget} 
         juzCompletedToday={juzCompletedToday}
         totalReadGlobal={totalReadGlobal} 
-        khatamCount={historyKhatam} // UPDATE: Kirim data khatam ke sini
+        khatamCount={historyKhatam} 
       />
 
-      {/* 3. Grid 30 Juz */}
+      {/* Grid 30 Juz */}
       <div>
          <h2 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-700">
              <BookOpen size={20} className="text-sky-600" /> Daftar Juz
@@ -141,10 +140,8 @@ export default async function TadarusPage() {
                const isDone = (logData?.completion_count || 0) > 0
                
                let lastReadInfo = null;
-               // Cek Surah Terakhir Dibaca
                if (!isDone && logData?.last_read_surah && logData?.last_read_ayah) {
                    const surahName = SURAH_DATA.find(s => s.number === logData.last_read_surah)?.name
-                   
                    if (surahName) {
                        lastReadInfo = {
                            surah: surahName,
@@ -168,7 +165,7 @@ export default async function TadarusPage() {
          </div>
       </div>
 
-      {/* 4. Footer Area (Tombol Pengaturan) */}
+      {/* Footer Area */}
       <div className="pt-8 border-t border-gray-100">
           <div className="flex flex-col md:flex-row justify-center items-center gap-4">
               <RestartButton />
@@ -176,7 +173,7 @@ export default async function TadarusPage() {
               <ResetButton />
           </div>
           <p className="text-center text-xs text-gray-400 mt-4 max-w-md mx-auto">
-              *Gunakan "Ulangi Putaran" untuk mereset checklist juz saat khatam. Gunakan "Reset Data" untuk menghapus permanen semua riwayat.
+              *Gunakan "Ulangi Putaran" untuk mereset checklist Juz yang telah dibaca dalam satu siklus. Gunakan "Reset Data" untuk menghapus permanen semua riwayat khatam.
           </p>
       </div>
 

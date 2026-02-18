@@ -27,7 +27,7 @@ export default function RestartButton() {
       title="Bersihkan kartu tapi simpan total khatam"
     >
       {isPending ? <Loader2 size={14} className="animate-spin" /> : <RefreshCcw size={14} />}
-      Reset Data Bacaan Juz
+      Ulangi Putaran
     </button>
   )
 }

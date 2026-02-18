@@ -14,7 +14,7 @@ function getWIBDate() {
   return new Date(utc + (7 * 3600000)); // UTC + 7 Jam
 }
 
-// --- 1. DEFINISI WARNA (PENTING AGAR TAILWIND TIDAK MENGHAPUS CLASS) ---
+// --- 1. DEFINISI WARNA ---
 const COLOR_MAP = {
     orange: { text: "text-orange-500", bg: "bg-orange-500", soft: "bg-orange-500/10" },
     violet: { text: "text-violet-500", bg: "bg-violet-500", soft: "bg-violet-500/10" },
@@ -25,7 +25,7 @@ const COLOR_MAP = {
 
 type ColorTheme = keyof typeof COLOR_MAP;
 
-// --- Helper Component: Card Progress (FIXED) ---
+// --- Helper Component: Card Progress ---
 function ProgressCard({ 
     href, title, icon: Icon, theme, 
     progressValue, progressMax, progressLabel, 
@@ -36,8 +36,6 @@ function ProgressCard({
     points: number, delay: string 
 }) {
     const percent = Math.min(100, Math.round((progressValue / progressMax) * 100)) || 0
-    
-    // Ambil class warna dari Map (Dijamin terbaca oleh Tailwind)
     const colors = COLOR_MAP[theme];
 
     return (
@@ -46,17 +44,14 @@ function ProgressCard({
             className="group relative bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col justify-between h-full"
             style={{ animationDelay: delay }}
         >
-            {/* Background Abstrak */}
             <div className={`absolute top-0 right-0 p-16 opacity-5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110 ${colors.bg}`} />
             
             <div className="relative z-10 w-full">
                 <div className="flex justify-between items-start mb-4">
-                    {/* Icon Soft Background */}
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colors.text} ${colors.soft}`}>
                         <Icon size={24} strokeWidth={2.5} />
                     </div>
                     
-                    {/* Badge Poin */}
                     <div className="bg-yellow-50 text-yellow-700 border border-yellow-200 px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm">
                         <Zap size={12} className="fill-yellow-500 text-yellow-500" />
                         {points} Poin
@@ -70,9 +65,7 @@ function ProgressCard({
                         <span>Progress</span>
                         <span className="text-gray-900">{progressLabel}</span>
                     </div>
-                    {/* Bar Background */}
                     <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                        {/* Bar Fill (Warna Utama) */}
                         <div 
                             className={`h-full rounded-full transition-all duration-1000 ease-out ${colors.bg}`} 
                             style={{ width: `${percent}%` }}
@@ -104,10 +97,13 @@ export default async function DashboardPage() {
   const { data: itikafData } = await supabase.from('lailatul_qadar_progress').select('night_number, is_itikaf').eq('user_id', user.id).eq('is_itikaf', true)
   const { data: zakatData } = await supabase.from('zakat_fitrah_progress').select('is_paid').eq('user_id', user.id).single()
 
-  // --- 2. LOGIKA POIN ---
-  const puasaCount = puasaData?.length || 0
-  const puasaPoints = puasaCount * 1
+  // --- 2. LOGIKA POIN BARU ---
 
+  // A. Puasa (1x = 3 Poin)
+  const puasaCount = puasaData?.length || 0
+  const puasaPoints = puasaCount * 3
+
+  // B. Tarawih (Masjid=2, Rumah=1)
   let tarawihPoints = 0
   const tarawihCount = tarawihData?.length || 0
   tarawihData?.forEach((t) => {
@@ -119,24 +115,36 @@ export default async function DashboardPage() {
       }
   })
 
+  // C. Tadarus (FIX LOGIC)
+  // Aturan: 1 Juz = 5 Poin, Bonus Khatam = 3 Poin.
+  // Total 1 Khatam = (30 Juz * 5) + 3 Bonus = 153 Poin.
   const juzCompletedCount = quranData?.filter(q => q.completion_count > 0).length || 0
   const khatamCount = userSettings?.total_khatam_count || 0
-  const tadarusPoints = (juzCompletedCount * 5) + (khatamCount * 2)
+  
+  // Poin dari Riwayat Khatam (153 poin per khatam)
+  const pointsFromHistory = khatamCount * 153; 
+  // Poin dari Juz yang sedang berjalan (belum khatam lagi)
+  const pointsFromCurrent = juzCompletedCount * 5;
+  
+  const tadarusPoints = pointsFromHistory + pointsFromCurrent;
 
+  // D. I'tikaf (Ganjil=4, Genap=2)
   let itikafPoints = 0
   const itikafCount = itikafData?.length || 0
   itikafData?.forEach((i) => {
       const isOdd = i.night_number % 2 !== 0
-      itikafPoints += (isOdd ? 2 : 1)
+      itikafPoints += (isOdd ? 4 : 2)
   })
 
+  // E. Zakat (Lunas = 30 Poin)
   const isZakatPaid = zakatData?.is_paid || false
-  const zakatPoints = isZakatPaid ? 2 : 0
+  const zakatPoints = isZakatPaid ? 30 : 0
 
+  // Total Global
   const totalGlobalPoints = puasaPoints + tarawihPoints + tadarusPoints + itikafPoints + zakatPoints
   const displayName = user?.user_metadata?.username || user?.email?.split('@')[0] || "Hamba Allah"
 
-  // --- 3. LOGIKA TANGGAL (WIB) ---
+  // --- 3. LOGIKA TANGGAL ---
   const nowWIB = getWIBDate();
   const currentRamadhanDay = getCurrentRamadhanDay()
   const safeDay = Math.max(1, Math.min(currentRamadhanDay, RAMADHAN_DAYS_TOTAL))
@@ -159,7 +167,7 @@ export default async function DashboardPage() {
          </div>
 
          <div className="relative z-10">
-             {/* 1. WIDGET TANGGAL */}
+             {/* WIDGET TANGGAL */}
              <div className="inline-flex bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] md:text-xs font-medium border border-white/10 items-center gap-2 shadow-sm mb-4">
                  <Calendar size={12} className="text-emerald-200" />
                  <span>{masehiDate}</span>
@@ -169,7 +177,7 @@ export default async function DashboardPage() {
              </div>
 
              <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                 {/* 2. TEXT GREETING */}
+                 {/* GREETING */}
                  <div className="max-w-lg">
                     <h1 className="text-2xl md:text-3xl font-bold mb-2">
                         Assalamu'alaikum, {displayName}!
@@ -179,7 +187,7 @@ export default async function DashboardPage() {
                     </p>
                  </div>
 
-                 {/* 3. SCORE CARD */}
+                 {/* SCORE CARD */}
                  <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 min-w-37.5 text-center self-end md:self-auto shadow-lg">
                     <div className="text-emerald-200 text-xs font-bold uppercase tracking-widest mb-1">Total Poin</div>
                     <div className="text-4xl font-extrabold text-yellow-300 drop-shadow-sm flex items-center justify-center gap-2">
@@ -203,7 +211,7 @@ export default async function DashboardPage() {
                 href="/puasa"
                 title="1. Sukses Puasa"
                 icon={Sun}
-                theme="orange" // Menggunakan theme, bukan class manual
+                theme="orange"
                 progressValue={puasaCount}
                 progressMax={30}
                 progressLabel={`${puasaCount} / 30 Hari`}

@@ -40,7 +40,7 @@ export default function RegisterPage(props: {
             Daftar Akun Baru
           </h2>
           <p className="mt-1 text-sm text-emerald-50 font-bold">
-            Mulai Program 5 Sukses Ramadhan Kamu
+            Mulai Program 5 Sukses Ramadhan
           </p>
         </div>
 
