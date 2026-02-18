@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { Sun, Moon, BookOpen, Star, CheckCircle, Trophy, ArrowRight, Zap, Calendar, Medal, User } from "lucide-react"
+import { Sun, Moon, BookOpen, Star, CheckCircle, Trophy, ArrowRight, Zap, Calendar, Medal, User, Edit2 } from "lucide-react"
 import { 
     getCurrentRamadhanDay, 
     RAMADHAN_DAYS_TOTAL 
@@ -93,7 +93,6 @@ export default async function DashboardPage() {
   }
 
   // --- 1. FETCH DATA ---
-  // Ambil Data Profil (Username & Avatar)
   const { data: profile } = await supabase
     .from('profiles')
     .select('username, avatar_url')
@@ -141,7 +140,6 @@ export default async function DashboardPage() {
 
   const totalGlobalPoints = puasaPoints + tarawihPoints + tadarusPoints + itikafPoints + zakatPoints
   
-  // Display Name & Avatar Logic
   const displayName = profile?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || "Hamba Allah"
   const avatarUrl = profile?.avatar_url
 
@@ -173,7 +171,7 @@ export default async function DashboardPage() {
              <div className="flex justify-between items-start mb-4">
                  
                  {/* Widget Tanggal */}
-                 <div className="inline-flex bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] md:text-xs font-medium border border-white/10 items-center gap-2 shadow-sm">
+                 <div className="inline-flex bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full text-[10px] md:text-xs font-medium border border-white/10 items-center gap-2 shadow-sm h-fit mt-1">
                      <Calendar size={12} className="text-emerald-200" />
                      <span>{masehiDate}</span>
                      <span className="text-white/20">|</span>
@@ -181,22 +179,24 @@ export default async function DashboardPage() {
                      <span className="font-bold text-yellow-100">{hijriDate}</span>
                  </div>
 
-                 {/* --- AVATAR PROFIL (BARU) --- */}
-                 <Link href="/profile" className="group relative">
-                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-white/30 bg-white/10 flex items-center justify-center overflow-hidden shadow-lg transition-transform group-hover:scale-105 group-hover:border-white">
+                 {/* --- AVATAR PROFIL (UPDATE: DENGAN TEKS "EDIT PROFIL") --- */}
+                 <Link href="/profile" className="group flex flex-col items-center gap-1">
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-white/30 bg-white/10 flex items-center justify-center overflow-hidden shadow-lg transition-transform group-hover:scale-105 group-hover:border-white relative">
                         {avatarUrl ? (
                             <img src={avatarUrl} alt="Profil" className="w-full h-full object-cover" />
                         ) : (
                             <User size={20} className="text-white/80" />
                         )}
+                        
+                        {/* Overlay Edit saat Hover (Desktop) */}
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Edit2 size={16} className="text-white" />
+                        </div>
                     </div>
-                    {/* Badge Edit Kecil */}
-                    <div className="absolute -bottom-1 -right-1 bg-yellow-400 text-yellow-900 rounded-full p-0.5 border border-white shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
-                          <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
-                          <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
-                        </svg>
-                    </div>
+                    {/* Teks Edit Profil Kecil */}
+                    <span className="text-[9px] md:text-[10px] text-emerald-100 font-medium opacity-80 group-hover:opacity-100 group-hover:text-white transition-colors">
+                        Edit Profil
+                    </span>
                  </Link>
 
              </div>
