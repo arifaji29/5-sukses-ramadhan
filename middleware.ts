@@ -13,8 +13,9 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - api/cron (cron jobs) <-- PENTING: Agar cron job tidak kena redirect login
+     * - skip (halaman auto-login guest) <-- BARU: Agar auto-login bisa diakses
      * - images extensions (svg, png, jpg, etc)
      */
-    '/((?!_next/static|_next/image|favicon.ico|api/cron|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/cron|skip|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

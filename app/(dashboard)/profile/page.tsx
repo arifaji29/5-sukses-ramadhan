@@ -3,26 +3,24 @@
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { updateProfile } from "./actions"
-import { Save, Loader2, ArrowLeft, CheckCircle2 } from "lucide-react"
+import { Save, Loader2, ArrowLeft, CheckCircle2, AlertTriangle, Mail, Lock, Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 // --- KONFIGURASI AVATAR LOKAL ---
 // Pastikan Anda sudah menaruh gambar di folder: public/avatars/
 const AVATAR_OPTIONS = [
-  // --- LAKI-LAKI (6 Gambar) ---
+  // --- LAKI-LAKI ---
   "/avatars/pria-1.png",
   "/avatars/pria-2.png",
   "/avatars/pria-3.png",
   "/avatars/pria-4.png",
- 
   
-  // --- PEREMPUAN (6 Gambar) ---
+  // --- PEREMPUAN ---
   "/avatars/wanita-1.png",
   "/avatars/wanita-2.png",
   "/avatars/wanita-3.png",
   "/avatars/wanita-4.png",
-  
 ]
 
 export default function ProfilePage() {
@@ -30,24 +28,36 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   
-  // State untuk avatar yang dipilih
+  // State untuk avatar
   const [selectedAvatar, setSelectedAvatar] = useState<string>("")
+  
+  // State khusus untuk akun Guest (Anonim)
+  const [isAnonymous, setIsAnonymous] = useState(false)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [upgrading, setUpgrading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false) // State untuk Hide/Unhide Password
   
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
     async function getProfile() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
+      // Dapatkan data sesi Auth
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      
+      if (authUser) {
+        // Deteksi apakah ini akun guest
+        setIsAnonymous(authUser.is_anonymous || false)
+
+        // Dapatkan data profil dari tabel profiles
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', user.id)
+          .eq('id', authUser.id)
           .single()
         
         setUser(profile)
-        // Set avatar saat ini sebagai default selection
         if (profile?.avatar_url) {
             setSelectedAvatar(profile.avatar_url)
         }
@@ -57,11 +67,11 @@ export default function ProfilePage() {
     getProfile()
   }, [])
 
+  // Handler untuk menyimpan Nama & Avatar
   const handleSubmit = async (formData: FormData) => {
     setSaving(true)
     try {
       await updateProfile(formData)
-      // Redirect langsung ke Dashboard setelah sukses
       router.push('/') 
       router.refresh()
     } catch (error) {
@@ -69,6 +79,27 @@ export default function ProfilePage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  // Handler untuk mengubah akun Guest menjadi akun Permanen
+  const handleUpgradeAccount = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setUpgrading(true)
+
+    const { data, error } = await supabase.auth.updateUser({
+      email: email,
+      password: password,
+    })
+
+    if (error) {
+      alert("Gagal mengamankan akun: " + error.message)
+    } else {
+      alert("Sukses! Akun kamu sekarang permanen. Kamu bisa login kapan saja menggunakan Email ini.")
+      setIsAnonymous(false) // Sembunyikan form setelah sukses
+      setEmail("")
+      setPassword("")
+    }
+    setUpgrading(false)
   }
 
   if (loading) return <div className="p-8 text-center text-gray-500">Memuat profil...</div>
@@ -83,10 +114,76 @@ export default function ProfilePage() {
         </Link>
         <div>
             <h1 className="text-xl font-bold text-gray-800">Edit Profil</h1>
-            <p className="text-xs text-gray-500">Pilih karakter yang sesuai denganmu</p>
+            <p className="text-xs text-gray-500">Sesuaikan profil dan amankan akunmu</p>
         </div>
       </div>
 
+      {/* FORM 1: UPGRADE AKUN (KHUSUS GUEST) */}
+      {isAnonymous && (
+        <div className="bg-orange-50 rounded-3xl shadow-sm border border-orange-200 p-6 mb-6">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="p-2 bg-orange-100 rounded-lg text-orange-600 mt-1">
+              <AlertTriangle size={20} />
+            </div>
+            <div>
+              <h2 className="font-bold text-orange-800">Amankan Akun Kamu!</h2>
+              <p className="text-sm text-orange-700 leading-relaxed mt-1">
+                Kamu saat ini masuk sebagai <strong>Guest</strong>. Jika kamu keluar dari aplikasi, riwayat poinmu akan hilang. Tautkan Email & Password agar akunmu aman selamanya.
+              </p>
+            </div>
+          </div>
+
+          <form onSubmit={handleUpgradeAccount} className="space-y-4" autoComplete="off">
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Kamu bebas mengarang nama email"
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-orange-200 bg-white text-black focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium"
+                required
+                autoComplete="new-password" // Trik untuk mencegah browser autofill email
+              />
+            </div>
+            
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input 
+                type={showPassword ? "text" : "password"} // Ganti tipe input berdasarkan state
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Buat Password (Min. 6 karakter)"
+                className="w-full pl-10 pr-12 py-3 rounded-xl border border-orange-200 bg-white text-black focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium"
+                required
+                minLength={6}
+                autoComplete="new-password" // Trik untuk mencegah browser autofill password
+              />
+              
+              {/* Tombol Hide/Unhide Password */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors p-1"
+                aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={upgrading}
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-orange-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              {upgrading ? <Loader2 className="animate-spin" /> : <Lock size={18} />}
+              Jadikan Akun Permanen
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* FORM 2: NAMA & AVATAR */}
       <div className="bg-white rounded-3xl shadow-lg shadow-gray-100 border border-gray-100 p-6">
         <form action={handleSubmit} className="space-y-8">
           
@@ -112,7 +209,6 @@ export default function ProfilePage() {
                             alt={`Avatar ${index + 1}`} 
                             className="w-full h-full object-cover" 
                             loading="lazy"
-                            // Tambahkan error handling sederhana jika gambar belum ada
                             onError={(e) => {
                                 (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=No+Img';
                             }}
@@ -128,7 +224,6 @@ export default function ProfilePage() {
                   ))}
               </div>
               
-
               {/* Input Tersembunyi untuk mengirim URL ke Server Action */}
               <input type="hidden" name="avatar_url" value={selectedAvatar} />
           </div>
@@ -143,6 +238,7 @@ export default function ProfilePage() {
               className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-black focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all font-medium placeholder:text-gray-400"
               required
               maxLength={20}
+              autoComplete="off"
             />
             <p className="text-xs text-gray-400 text-right">Maksimal 20 karakter</p>
           </div>
@@ -156,9 +252,9 @@ export default function ProfilePage() {
             {saving ? <Loader2 className="animate-spin" /> : <Save size={20} />}
             Simpan Perubahan
           </button>
-
         </form>
       </div>
+
     </div>
   )
 }

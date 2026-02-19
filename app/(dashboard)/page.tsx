@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { Sun, Moon, BookOpen, Star, CheckCircle, Trophy, ArrowRight, Zap, Calendar, Medal, User, Edit2 } from "lucide-react"
+import { Sun, Moon, BookOpen, Star, CheckCircle, Trophy, ArrowRight, Zap, Calendar, Medal, User, Edit2, AlertTriangle } from "lucide-react"
 import { 
     getCurrentRamadhanDay, 
     RAMADHAN_DAYS_TOTAL 
@@ -92,6 +92,9 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
+  // --- CEK STATUS GUEST ---
+  const isAnonymous = user?.is_anonymous || false
+
   // --- 1. FETCH DATA ---
   const { data: profile } = await supabase
     .from('profiles')
@@ -179,7 +182,7 @@ export default async function DashboardPage() {
                      <span className="font-bold text-yellow-100">{hijriDate}</span>
                  </div>
 
-                 {/* --- AVATAR PROFIL (UPDATE: DENGAN TEKS "EDIT PROFIL") --- */}
+                 {/* --- AVATAR PROFIL --- */}
                  <Link href="/profile" className="group flex flex-col items-center gap-1">
                     <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-white/30 bg-white/10 flex items-center justify-center overflow-hidden shadow-lg transition-transform group-hover:scale-105 group-hover:border-white relative">
                         {avatarUrl ? (
@@ -223,6 +226,27 @@ export default async function DashboardPage() {
              </div>
          </div>
       </div>
+
+      {/* --- BADGE PERINGATAN GUEST (Hanya Muncul Jika isAnonymous == true) --- */}
+      {isAnonymous && (
+        <Link 
+            href="/profile" 
+            className="group flex flex-col md:flex-row items-start md:items-center gap-4 bg-orange-50 border border-orange-200 p-4 rounded-2xl hover:bg-orange-100 transition-colors shadow-sm cursor-pointer"
+        >
+            <div className="bg-orange-100 p-2.5 rounded-full text-orange-600 group-hover:bg-orange-200 transition-colors shrink-0">
+                <AlertTriangle size={20} />
+            </div>
+            <div className="flex-1">
+                <h3 className="font-bold text-orange-800 text-sm md:text-base">Perhatian: Kamu Masuk Sebagai Akun Guest</h3>
+                <p className="text-xs md:text-sm text-orange-700 mt-1 leading-relaxed">
+                Segera lengkapi akun agar riwayat poinmu tidak hilang saat keluar aplikasi.
+                </p>
+            </div>
+            <div className="shrink-0 text-sm font-bold text-orange-600 group-hover:text-orange-800 flex items-center gap-1 transition-colors mt-2 md:mt-0">
+                Lengkapi Sekarang <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+            </div>
+        </Link>
+      )}
 
       {/* SECTION 2: GRID MENU PROGRESS */}
       <div>

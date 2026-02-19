@@ -146,7 +146,7 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
             <input 
                 type="text" 
                 name="notes"
-                placeholder="Nama Amil / Masjid Pengumpul Zakat" 
+                placeholder="Nama Amil Zakat / Petugs yang menerima" 
                 className="w-full border-2 border-gray-200 bg-gray-50 text-gray-900 rounded-xl p-3.5 text-sm focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all placeholder:text-gray-400"
                 required
             />
