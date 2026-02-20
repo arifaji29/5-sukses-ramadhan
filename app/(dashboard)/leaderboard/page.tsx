@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { Trophy, Medal, User, Crown, AlertTriangle } from "lucide-react"
+import { Trophy, Medal, User, Crown, AlertTriangle, Lightbulb } from "lucide-react"
+
+// IMPORT KOMPONEN BANNER AJAK TEMAN
+import InviteBanner from "@/components/features/leaderboard/InviteBanner"
 
 // Tipe Data Leaderboard sesuai kolom di View Database
 type LeaderboardItem = {
@@ -43,18 +46,48 @@ export default async function LeaderboardPage() {
   return (
     <div className="max-w-3xl mx-auto pb-20 space-y-8">
       
+      {/* --- INJEKSI CSS ANIMASI MARQUEE --- */}
+      <style>{`
+        @keyframes scroll {
+          0% { transform: translateX(100%); }
+          100% { transform: translateX(-100%); }
+        }
+        .animate-scroll {
+          display: inline-flex;
+          animation: scroll 15s linear infinite;
+          /* Memastikan lebar animasi minimal selebar container agar efeknya mulus */
+          min-width: 100%; 
+        }
+        .animate-scroll:hover, .animate-scroll:active {
+          animation-play-state: paused;
+        }
+      `}</style>
+
       {/* --- HEADER --- */}
-      <div className="bg-linear-to-r from-emerald-600 to-teal-800 rounded-b-3xl md:rounded-3xl p-8 text-white shadow-xl relative overflow-hidden text-center">
+      <div className="bg-linear-to-r from-emerald-600 to-teal-800 rounded-b-3xl md:rounded-3xl p-8 text-white shadow-xl relative overflow-hidden text-center flex flex-col items-center">
          {/* Hiasan Background */}
          <div className="absolute top-0 left-0 w-full h-full bg-white/5 pattern-grid-lg opacity-10 pointer-events-none"></div>
          
-         <div className="relative z-10">
+         <div className="relative z-10 w-full flex flex-col items-center">
             <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center justify-center gap-2">
                 <Trophy className="text-yellow-300 fill-yellow-300" /> Leaderboard
             </h1>
             <p className="text-emerald-100 text-sm">
                 Fastabiqul Khairat (Berlomba-lomba dalam kebaikan)
             </p>
+
+            {/* --- WIDGET HINT (TEKS BERJALAN) --- */}
+            <div className="mt-6 bg-black/20 backdrop-blur-sm border border-white/10 rounded-full py-2 px-4 overflow-hidden relative w-full max-w-md shadow-inner cursor-default">
+                <div className="w-full relative overflow-hidden flex items-center h-5">
+                    <div className="animate-scroll absolute whitespace-nowrap flex items-center gap-2 justify-center pr-8">
+                        <Lightbulb size={14} className="text-yellow-400 fill-yellow-400 shrink-0" />
+                        <span className="text-xs md:text-sm text-emerald-50 font-medium tracking-wide">
+                            Perbanyak tadarus Al-Qur'an untuk meningkatkan poin lebih cepat!
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {/* --------------------------------- */}
          </div>
       </div>
 
@@ -78,6 +111,11 @@ export default async function LeaderboardPage() {
               </div>
               <div className="text-[10px] font-medium text-gray-400 uppercase">Total Poin</div>
           </div>
+      </div>
+
+      {/* --- BANNER AJAK TEMAN --- */}
+      <div className="mx-4 md:mx-0">
+          <InviteBanner />
       </div>
 
       {/* --- TAMPILAN JIKA DATA KOSONG --- */}

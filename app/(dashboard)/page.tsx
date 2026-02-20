@@ -215,14 +215,20 @@ export default async function DashboardPage() {
                     </p>
                  </div>
 
-                 {/* SCORE CARD */}
-                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 min-w-37.5 text-center self-end md:self-auto shadow-lg">
-                    <div className="text-emerald-200 text-xs font-bold uppercase tracking-widest mb-1">Total Poin</div>
-                    <div className="text-4xl font-extrabold text-yellow-300 drop-shadow-sm flex items-center justify-center gap-2">
-                        <Trophy size={28} className="text-yellow-400" />
+                 {/* SCORE CARD (UPDATE: Klik menuju Leaderboard) */}
+                 <Link 
+                    href="/leaderboard" 
+                    className="group bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 min-w-37.5 text-center self-end md:self-auto shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-pointer flex flex-col items-center justify-center"
+                 >
+                    <div className="text-emerald-200 text-xs font-bold uppercase tracking-widest mb-1 group-hover:text-white transition-colors">Total Poin</div>
+                    <div className="text-4xl font-extrabold text-yellow-300 drop-shadow-sm flex items-center justify-center gap-2 mb-1">
+                        <Trophy size={28} className="text-yellow-400 group-hover:rotate-12 transition-transform duration-300" />
                         {totalGlobalPoints}
                     </div>
-                 </div>
+                    <div className="text-[10px] text-emerald-100 font-medium flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity mt-1">
+                        Lihat Peringkat <ArrowRight size={10} className="group-hover:translate-x-1 transition-transform" />
+                    </div>
+                 </Link>
              </div>
          </div>
       </div>

@@ -140,7 +140,7 @@ export default function ProfilePage() {
                 type="email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Kamu bebas mengarang nama email"
+                placeholder="Email kamu (Bebas, tidak harus aktif)"
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-orange-200 bg-white text-black focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium"
                 required
                 autoComplete="new-password" // Trik untuk mencegah browser autofill email

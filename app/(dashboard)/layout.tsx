@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image" 
-import { usePathname, useRouter } from "next/navigation" // Tambahan useRouter
-import { createClient } from "@/lib/supabase/client" // Tambahan import Supabase
-import { LayoutDashboard, BookOpen, Moon, Sun, CheckCircle, LogOut, Menu, X, Star, Trophy, AlertTriangle } from "lucide-react" // Tambahan AlertTriangle
+import { usePathname, useRouter } from "next/navigation" 
+import { createClient } from "@/lib/supabase/client" 
+import { LayoutDashboard, BookOpen, Moon, Sun, CheckCircle, LogOut, Menu, X, Star, Trophy, AlertTriangle } from "lucide-react" 
 import { logout } from "@/app/(auth)/actions"
 import MobileBottomNav from "../../components/layout/MobileBottomNav"
 
@@ -24,15 +24,27 @@ export default function DashboardLayout({
 
   const supabase = createClient()
 
+  // --- UPDATE: Listener Real-time untuk Status Auth ---
   useEffect(() => {
-    async function checkUserStatus() {
+    // 1. Cek status awal saat layout dimuat
+    const checkInitialStatus = async () => {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user?.is_anonymous) {
-        setIsAnonymous(true)
-      }
+      setIsAnonymous(user?.is_anonymous || false)
     }
-    checkUserStatus()
-  }, []) // Hapus dependency supabase agar tidak infinite loop
+    checkInitialStatus()
+
+    // 2. Dengarkan perubahan status Auth (misal: saat akun di-upgrade dari guest)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setIsAnonymous(session.user.is_anonymous || false)
+      }
+    })
+
+    // Bersihkan listener saat komponen dilepas (unmount)
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [supabase])
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
 
@@ -63,7 +75,8 @@ export default function DashboardLayout({
     <div className="flex h-screen bg-gray-50">
       
       {/* --- MODAL PERINGATAN LOGOUT (KHUSUS GUEST) --- */}
-      {showLogoutWarning && (
+      {/* UPDATE: Tambahkan && isAnonymous sebagai pengaman ganda */}
+      {showLogoutWarning && isAnonymous && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="flex flex-col items-center text-center">

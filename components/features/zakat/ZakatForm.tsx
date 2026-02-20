@@ -1,7 +1,7 @@
 'use client'
 
 import { saveZakatProgress, resetZakat } from "@/app/(dashboard)/zakat/actions"
-import { Upload, CheckCircle, Wallet, Package, Image as ImageIcon, Loader2, Trash2 } from "lucide-react"
+import { Upload, CheckCircle, Wallet, Package, Image as ImageIcon, Loader2, Trash2, Camera } from "lucide-react"
 import Image from "next/image"
 import { useState, useTransition } from "react"
 
@@ -73,7 +73,6 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
                 {data.proof_url && (
                     <div className="pt-2">
                         <span className="text-gray-500 font-medium block mb-2">Bukti Foto:</span>
-                        {/* UPDATE: Rasio 4:5 untuk foto detail */}
                         <div className="relative aspect-4/5 w-full max-w-xs mx-auto rounded-lg overflow-hidden border border-gray-200 bg-gray-100 shadow-md">
                             <Image 
                                 src={data.proof_url} 
@@ -152,39 +151,53 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
             />
         </div>
 
-        {/* Upload Foto (Update Rasio 4:5 di Preview Form) */}
+        {/* Upload Foto (Update: Fitur Kamera Langsung) */}
         <div className="space-y-2">
             <label className="text-sm font-bold text-gray-700 block uppercase tracking-wider">Foto Bukti (Opsional)</label>
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 hover:border-emerald-400 transition-all relative group cursor-pointer bg-gray-50/50 flex flex-col items-center justify-center min-h-50">
+            
+            <div className="relative group cursor-pointer">
+                {/* UPDATE PENTING: capture="environment" 
+                   Ini yang memicu kamera belakang langsung terbuka di HP 
+                */}
                 <input 
                     type="file" 
                     name="proof" 
                     accept="image/*" 
+                    capture="environment"  
                     onChange={handleFileChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                 />
-                
-                {preview ? (
-                    // UPDATE: Rasio 4:5 agar tidak gepeng
-                    <div className="relative aspect-4/5 w-full max-w-50 rounded-lg overflow-hidden shadow-md border border-gray-200">
-                        <Image src={preview} alt="Preview" fill className="object-cover" />
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-                            <p className="text-white text-sm font-medium flex items-center gap-2">
-                                <ImageIcon size={16} /> Ganti Foto
-                            </p>
+
+                <div className={`
+                    border-2 border-dashed rounded-xl p-6 transition-all min-h-50 flex flex-col items-center justify-center text-center
+                    ${preview 
+                        ? 'border-emerald-300 bg-emerald-50/30' 
+                        : 'border-gray-300 bg-gray-50/50 hover:bg-gray-50 hover:border-emerald-400'
+                    }
+                `}>
+                    {preview ? (
+                        <div className="relative aspect-4/5 w-full max-w-50 rounded-lg overflow-hidden shadow-md border border-gray-200 group-hover:opacity-90 transition-opacity">
+                            <Image src={preview} alt="Preview" fill className="object-cover" />
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[1px]">
+                                <Camera className="text-white" size={24} />
+                            </div>
                         </div>
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center gap-3 text-gray-400 py-4">
-                        <div className="bg-white p-4 rounded-full shadow-sm group-hover:scale-110 transition-transform">
-                            <ImageIcon size={28} className="text-gray-400 group-hover:text-emerald-500 transition-colors" />
+                    ) : (
+                        <div className="flex flex-col items-center gap-3 py-2">
+                            <div className="bg-white p-4 rounded-full shadow-sm group-hover:scale-110 transition-transform duration-300">
+                                <Camera size={28} className="text-gray-400 group-hover:text-emerald-500 transition-colors" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-gray-700 group-hover:text-emerald-600 transition-colors">
+                                    Ambil Foto Bukti
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1 max-w-50 mx-auto leading-relaxed">
+                                    Klik untuk membuka kamera HP atau pilih dari galeri
+                                </p>
+                            </div>
                         </div>
-                        <div className="text-center">
-                            <p className="text-sm font-medium text-gray-600 group-hover:text-emerald-600 transition-colors">Klik untuk upload foto</p>
-                            <p className="text-xs text-gray-400 mt-1">Format: Potret / Tegak (4:5)</p>
-                        </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </div>
 
