@@ -68,16 +68,21 @@ export default function ProfilePage() {
   }, [])
 
   // Handler untuk menyimpan Nama & Avatar
-  const handleSubmit = async (formData: FormData) => {
-    setSaving(true)
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // MENCEGAH HALAMAN RELOAD/REFRESH
+    setSaving(true);
+    
+    // Ambil data dari form
+    const formData = new FormData(e.currentTarget);
+
     try {
-      await updateProfile(formData)
-      router.push('/') 
-      router.refresh()
+      await updateProfile(formData);
+      router.push('/'); 
+      router.refresh();
     } catch (error) {
-      alert("Gagal memperbarui profil.")
+      alert("Gagal memperbarui profil.");
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
   }
 
@@ -185,7 +190,8 @@ export default function ProfilePage() {
 
       {/* FORM 2: NAMA & AVATAR */}
       <div className="bg-white rounded-3xl shadow-lg shadow-gray-100 border border-gray-100 p-6">
-        <form action={handleSubmit} className="space-y-8">
+        {/* ACTION DIUBAH MENJADI ONSUBMIT 👇 */}
+        <form onSubmit={handleSubmit} className="space-y-8">
           
           {/* BAGIAN 1: PILIH AVATAR */}
           <div>
@@ -247,10 +253,25 @@ export default function ProfilePage() {
           <button 
             type="submit" 
             disabled={saving}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-200 hover:shadow-emerald-300 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            className={`
+              w-full font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-300
+              ${saving 
+                ? "bg-emerald-500 text-emerald-50 cursor-not-allowed opacity-90 scale-[0.98]" 
+                : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200 hover:shadow-emerald-300 active:scale-[0.98]"
+              }
+            `}
           >
-            {saving ? <Loader2 className="animate-spin" /> : <Save size={20} />}
-            Simpan Perubahan
+            {saving ? (
+              <>
+                <Loader2 size={20} className="animate-spin" />
+                Menyimpan...
+              </>
+            ) : (
+              <>
+                <Save size={20} />
+                Simpan Perubahan
+              </>
+            )}
           </button>
         </form>
       </div>
