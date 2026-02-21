@@ -27,3 +27,19 @@ body {
 .font-amiri {
   font-family: 'Amiri', serif;
 }
+
+
+@font-face {
+  font-family: 'LPMQ IsepMisbah';
+  /* Pastikan path URL ini sesuai dengan lokasi file font Anda di folder public */
+  src: url('/fonts/lpmq.ttf') format('truetype'); 
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap; /* Memastikan teks tetap muncul sambil menunggu font didownload */
+}
+
+/* --- TAMBAHKAN KODE INI DI BAWAHNYA --- */
+.font-lpmq {
+  font-family: 'LPMQ IsepMisbah', 'Traditional Arabic', serif !important;
+  line-height: normal; /* Menjaga agar harakat tidak terpotong */
+}
