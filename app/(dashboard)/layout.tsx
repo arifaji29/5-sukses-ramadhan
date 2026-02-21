@@ -141,8 +141,8 @@ export default function DashboardLayout({
                     />
                 </div>
                 <div>
-                    <h1 className="text-lg font-bold text-gray-800 leading-tight">Ramadhan</h1>
-                    <p className="text-[10px] text-gray-400 font-medium tracking-wider">REMINDER</p>
+                    <h1 className="text-lg font-bold text-gray-800 leading-tight">5 SUKSES</h1>
+                    <p className="text-[10px] text-gray-400 font-medium tracking-wider">RAMADHAN</p>
                 </div>
             </div>
             
