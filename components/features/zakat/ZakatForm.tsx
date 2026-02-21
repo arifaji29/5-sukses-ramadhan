@@ -200,7 +200,6 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
                     type="file" 
                     name="proof" 
                     accept="image/*" 
-                    capture="environment"  
                     onChange={handleFileChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                 />
