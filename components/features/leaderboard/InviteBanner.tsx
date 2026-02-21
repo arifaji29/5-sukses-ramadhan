@@ -45,7 +45,7 @@ export default function InviteBanner() {
                 <Users size={20} className="md:w-6 md:h-6" />
             </div>
             <div>
-                <h3 className="font-bold text-emerald-900 text-sm md:text-base">Ajak Teman Berlomba!</h3>
+                <h3 className="font-bold text-emerald-900 text-sm md:text-base">Ajak Teman Bergabung!</h3>
                 <p className="text-xs md:text-sm text-emerald-700 leading-snug mt-0.5">Bagikan link ini agar temanmu bisa langsung masuk tanpa daftar.</p>
             </div>
         </div>

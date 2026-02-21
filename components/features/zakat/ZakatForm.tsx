@@ -4,6 +4,7 @@ import { saveZakatProgress, resetZakat } from "@/app/(dashboard)/zakat/actions"
 import { Upload, CheckCircle, Wallet, Package, Image as ImageIcon, Loader2, Trash2, Camera } from "lucide-react"
 import Image from "next/image"
 import { useState, useTransition } from "react"
+import imageCompression from 'browser-image-compression'
 
 interface ZakatData {
   is_paid: boolean
@@ -16,13 +17,50 @@ interface ZakatData {
 export default function ZakatForm({ data }: { data: ZakatData | null }) {
   const [isPending, startTransition] = useTransition()
   const [preview, setPreview] = useState<string | null>(null)
+  const [compressedFile, setCompressedFile] = useState<File | null>(null)
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      const url = URL.createObjectURL(file)
-      setPreview(url)
+      setPreview(URL.createObjectURL(file))
+
+      const options = {
+        maxSizeMB: 0.8, 
+        maxWidthOrHeight: 1200,
+        // PENTING: Matikan web worker untuk mencegah crash di Chrome/Safari Mobile
+        useWebWorker: false, 
+      }
+
+      try {
+        const compressedBlob = await imageCompression(file, options)
+        const compressed = new File([compressedBlob], file.name, {
+            type: compressedBlob.type,
+            lastModified: Date.now(),
+        })
+        setCompressedFile(compressed) 
+      } catch (error) {
+        console.error("Gagal kompresi:", error)
+        alert("Gagal memproses foto. Silakan coba foto lain.")
+      }
     }
+  }
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault() 
+    const formData = new FormData(e.currentTarget)
+
+    if (compressedFile) {
+        formData.set('proof', compressedFile)
+    }
+
+    startTransition(async () => {
+        try {
+            await saveZakatProgress(formData)
+        } catch (error) {
+            console.error("Gagal simpan:", error)
+            alert("Gagal menyimpan data. Pastikan koneksi stabil dan ukuran foto tidak terlalu besar.")
+        }
+    })
   }
 
   const handleDelete = () => {
@@ -30,6 +68,7 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
     startTransition(async () => {
         await resetZakat()
         setPreview(null)
+        setCompressedFile(null)
     })
   }
 
@@ -78,6 +117,7 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
                                 src={data.proof_url} 
                                 alt="Bukti Zakat" 
                                 fill 
+                                unoptimized
                                 className="object-cover hover:scale-105 transition-transform duration-500"
                             />
                         </div>
@@ -99,7 +139,7 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
 
   // --- TAMPILAN FORM BAYAR ---
   return (
-    <form action={saveZakatProgress} className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 space-y-8">
+    <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 space-y-8">
         
         <div className="border-b border-gray-100 pb-4">
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
@@ -145,20 +185,17 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
             <input 
                 type="text" 
                 name="notes"
-                placeholder="Nama Amil Zakat / Petugs yang menerima" 
+                placeholder="Nama Amil Zakat / Petugas yang menerima" 
                 className="w-full border-2 border-gray-200 bg-gray-50 text-gray-900 rounded-xl p-3.5 text-sm focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all placeholder:text-gray-400"
                 required
             />
         </div>
 
-        {/* Upload Foto (Update: Fitur Kamera Langsung) */}
+        {/* Upload Foto */}
         <div className="space-y-2">
             <label className="text-sm font-bold text-gray-700 block uppercase tracking-wider">Foto Bukti (Opsional)</label>
             
             <div className="relative group cursor-pointer">
-                {/* UPDATE PENTING: capture="environment" 
-                   Ini yang memicu kamera belakang langsung terbuka di HP 
-                */}
                 <input 
                     type="file" 
                     name="proof" 
@@ -177,7 +214,7 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
                 `}>
                     {preview ? (
                         <div className="relative aspect-4/5 w-full max-w-50 rounded-lg overflow-hidden shadow-md border border-gray-200 group-hover:opacity-90 transition-opacity">
-                            <Image src={preview} alt="Preview" fill className="object-cover" />
+                            <Image src={preview} alt="Preview" fill unoptimized className="object-cover" />
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[1px]">
                                 <Camera className="text-white" size={24} />
                             </div>
@@ -203,10 +240,11 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
 
         <button 
             type="submit" 
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-200 hover:shadow-emerald-300 active:scale-[0.98]"
+            disabled={isPending}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-200 hover:shadow-emerald-300 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
         >
-            <Upload size={20} />
-            Simpan & Tandai Lunas
+            {isPending ? <Loader2 size={20} className="animate-spin" /> : <Upload size={20} />}
+            {isPending ? "Menyimpan..." : "Simpan & Tandai Lunas"}
         </button>
 
     </form>
