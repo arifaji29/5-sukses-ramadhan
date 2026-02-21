@@ -20,7 +20,7 @@ const lpmq = localFont({
 
 export const metadata: Metadata = {
   title: "5 Sukses Ramadhan",
-  description: "Aplikasi monitoring ibadah Ramadhan",
+  description: "Aplikasi monitoring ibadah untuk mencapai 5 sukses di bulan Ramadhan",
 };
 
 export default function RootLayout({

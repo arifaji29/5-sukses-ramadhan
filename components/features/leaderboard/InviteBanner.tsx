@@ -8,7 +8,7 @@ export default function InviteBanner() {
   const shareUrl = "https://5sukses-ramadhan.netlify.app/skip"
   
   // Pesan default saat tombol share ditekan
-  const shareMessage = `Assalamu'alaikum! Yuk bareng-bareng sukseskan 5 Sukses Ramadhan.\n\nKlik link ini ya :\n${shareUrl}`
+  const shareMessage = `${shareUrl}`
 
   const handleShare = async () => {
     // Mengecek apakah browser HP mendukung fitur "Share" bawaan (seperti share ke WA, IG, dll)
