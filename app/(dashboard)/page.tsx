@@ -208,10 +208,10 @@ export default async function DashboardPage() {
                  {/* GREETING */}
                  <div className="max-w-lg">
                     <h1 className="text-2xl md:text-3xl font-bold mb-2">
-                        Assalamu'alaikum, {displayName}!
+                        Assalamu'alaikum, <span className="text-yellow-300 drop-shadow-sm">{displayName}!</span>
                     </h1>
                     <p className="text-emerald-100 text-sm leading-relaxed">
-                        Terus semangat kumpulkan poin kebaikan di bulan Ramadhan ini.
+                        Yuk, selesaikan challenge 5 Sukses Ramadhan ini dengan kumpulkan poin sebanyak-banyaknya!
                     </p>
                  </div>
 
