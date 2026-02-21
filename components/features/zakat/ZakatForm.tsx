@@ -25,8 +25,8 @@ export default function ZakatForm({ data }: { data: ZakatData | null }) {
       setPreview(URL.createObjectURL(file))
 
       const options = {
-        maxSizeMB: 0.8, 
-        maxWidthOrHeight: 1200,
+        maxSizeMB: 0.25, 
+        maxWidthOrHeight: 800,
         // PENTING: Matikan web worker untuk mencegah crash di Chrome/Safari Mobile
         useWebWorker: false, 
       }
