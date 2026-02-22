@@ -7,6 +7,10 @@ import {
     RAMADHAN_DAYS_TOTAL 
 } from "@/lib/ramadhan-time"
 
+// --- IMPORT UNTUK FITUR AI MOTIVASI ---
+import { Suspense } from "react"
+import AiMotivation from "@/components/features/dashboard/AiMotivation"
+
 // --- Helper Waktu WIB ---
 function getWIBDate() {
   const now = new Date();
@@ -210,9 +214,15 @@ export default async function DashboardPage() {
                     <h1 className="text-2xl md:text-3xl font-bold mb-2">
                         Assalamu'alaikum, <span className="text-yellow-300 drop-shadow-sm">{displayName}!</span>
                     </h1>
-                    <p className="text-emerald-100 text-sm leading-relaxed">
-                        Yuk, selesaikan challenge 5 Sukses Ramadhan ini dengan kumpulkan poin sebanyak-banyaknya!
-                    </p>
+                    
+                    {/* --- AI MOTIVATION --- */}
+                    <Suspense fallback={
+                        <p className="text-emerald-100/70 text-sm leading-relaxed animate-pulse">
+                            Mencari inspirasi untukmu hari ini...
+                        </p>
+                    }>
+                        <AiMotivation userName={displayName} totalPoints={totalGlobalPoints} />
+                    </Suspense>
                  </div>
 
                  {/* SCORE CARD (UPDATE: Klik menuju Leaderboard) */}
