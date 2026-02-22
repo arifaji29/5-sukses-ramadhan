@@ -164,25 +164,25 @@ export default async function DashboardPage() {
   let timeBasedMessage = "";
 
   if (hour >= 16 && hour < 20) {
-      timeBasedMessage = "Waktunya berbuka! Jangan lupa centang puasa harianmu hari ini untuk klaim 3 poin ya! 🌅";
+      timeBasedMessage = "Waktunya berbuka! Jangan lupa centang puasa harianmu hari ini untuk klaim 3 poin ya!";
   } else if (hour >= 20 && hour < 22) {
-      timeBasedMessage = "Habis Isya jangan langsung rebahan! Yuk kejar 2 poin dengan sholat Tarawih berjamaah. 🕌";
+      timeBasedMessage = "Habis Isya jangan langsung rebahan! Yuk kejar 2 poin dengan sholat Tarawih berjamaah. ";
   } else if (hour >= 22 || hour < 5) {
-      timeBasedMessage = "Malam yang tenang adalah waktu terbaik bersama Al-Qur'an. Yuk selesaikan 1 Juz dan dapatkan 5 poin! 📖";
+      timeBasedMessage = "Malam yang tenang adalah waktu terbaik bersama Al-Qur'an. Yuk selesaikan 1 Juz dan dapatkan 5 poin! ";
   } else if (hour >= 5 && hour < 10) {
-      timeBasedMessage = "Pagi yang cerah! Jadikan harimu lebih berkah dengan tadarus. Kejar bonus 153 poin dengan Khatam Al-Qur'an! ✨";
+      timeBasedMessage = "Pagi yang cerah! Jadikan harimu lebih berkah dengan tadarus. Kejar bonus 153 poin dengan Khatam Al-Qur'an! ";
   } else if (hour >= 10 && hour < 13) {
       if (safeDay < 21) {
           const daysLeft = 21 - safeDay;
-          timeBasedMessage = `Siang ini, mari kuatkan niat. Malam Lailatul Qadar tinggal ${daysLeft} hari lagi lho! Yuk persiapkan diri. 🌙`;
+          timeBasedMessage = `Siang ini, mari kuatkan niat. Malam Lailatul Qadar tinggal ${daysLeft} hari lagi lho! Yuk persiapkan diri. `;
       } else {
-          timeBasedMessage = "Kita sudah di 10 malam terakhir! Gas poll I'tikaf: dapat 4 poin di malam ganjil dan 2 poin di malam genap! 🔥";
+          timeBasedMessage = "Kita sudah di 10 malam terakhir! Gas poll I'tikaf: dapat 4 poin di malam ganjil dan 2 poin di malam genap! ";
       }
   } else if (hour >= 13 && hour < 16) {
       if (isZakatPaid) {
-          timeBasedMessage = "Alhamdulillah kamu sudah membayar zakat dan menyelesaikan 1 dari 5 Sukses Ramadhan! Terus semangat ya! 💚";
+          timeBasedMessage = "Alhamdulillah kamu sudah membayar zakat dan menyelesaikan 1 dari 5 Sukses Ramadhan! Terus semangat ya! ";
       } else {
-          timeBasedMessage = "Udah bayar zakat belum nih? Yuk segera tunaikan Zakat Fitrah sebelum waktunya habis! 🌾";
+          timeBasedMessage = "Udah bayar zakat belum nih? Yuk segera tunaikan Zakat Fitrah sebelum waktunya habis! ";
       }
   }
 
