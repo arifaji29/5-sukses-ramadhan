@@ -7,9 +7,6 @@ import {
     RAMADHAN_DAYS_TOTAL 
 } from "@/lib/ramadhan-time"
 
-// --- IMPORT TOMBOL AI INTERAKTIF ---
-import AiTipsButton from "@/components/features/dashboard/AiTipsButton"
-
 // --- Helper Waktu WIB ---
 function getWIBDate() {
   const now = new Date();
@@ -167,7 +164,7 @@ export default async function DashboardPage() {
   let timeBasedMessage = "";
 
   if (hour >= 16 && hour < 20) {
-      timeBasedMessage = "Waktunya berbuka! Jangan lupa centang puasa harianmu hari ini untuk klaim 3 poin ya!";
+      timeBasedMessage = "Waktunya berbuka! Jangan lupa centang puasa harianmu hari ini untuk klaim 3 poin ya! 🌅";
   } else if (hour >= 20 && hour < 22) {
       timeBasedMessage = "Habis Isya jangan langsung rebahan! Yuk kejar 2 poin dengan sholat Tarawih berjamaah. 🕌";
   } else if (hour >= 22 || hour < 5) {
@@ -245,13 +242,6 @@ export default async function DashboardPage() {
                     <p className="text-emerald-100 text-sm leading-relaxed mb-1 min-h-10">
                         {timeBasedMessage}
                     </p>
-
-                    {/* Tombol AI Interaktif */}
-                    <AiTipsButton 
-                        userName={displayName} 
-                        totalPoints={totalGlobalPoints} 
-                        currentDay={safeDay} 
-                    />
                  </div>
 
                  {/* SCORE CARD */}
