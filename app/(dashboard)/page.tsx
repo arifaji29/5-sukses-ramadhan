@@ -174,9 +174,9 @@ export default async function DashboardPage() {
   } else if (hour >= 10 && hour < 13) {
       if (safeDay < 21) {
           const daysLeft = 21 - safeDay;
-          timeBasedMessage = `Siang ini, mari kuatkan niat. Malam Lailatul Qadar tinggal ${daysLeft} hari lagi lho! Yuk persiapkan diri. `;
+          timeBasedMessage = `Jangan sampai terlewat!. Malam Lailatul Qadar tinggal ${daysLeft} hari lagi lho! Yuk persiapkan diri. `;
       } else {
-          timeBasedMessage = "Kita sudah di 10 malam terakhir! Gas poll I'tikaf: dapat 4 poin di malam ganjil dan 2 poin di malam genap! ";
+          timeBasedMessage = "Nati malam jangan lupa ada Lailatul Qadar! Gas poll I'tikaf: dapat 4 poin di malam ganjil dan 2 poin di malam genap! ";
       }
   } else if (hour >= 13 && hour < 16) {
       if (isZakatPaid) {
