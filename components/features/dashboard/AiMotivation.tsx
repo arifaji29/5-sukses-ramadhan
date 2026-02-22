@@ -29,7 +29,7 @@ export default async function AiMotivation({ userName, totalPoints }: AiMotivati
         - Tarawih di masjid dapat 2 poin (lebih besar dari di rumah lho!).
         - Selesaikan baca 1 Juz dapat 5 poin.
         - Khatam Al-Qur'an dapat bonus besar 153 poin.
-        - I'tikaf di malam ganjil dapat 4 poin. Persiapkan dari sekarang karena waktunya kurang (sebutkan malam lailatul qadar kurang berapa hari lagi)
+        - I'tikaf di malam ganjil dapat 4 poin. Persiapkan dari sekarang ya!
         - Jangan lupa catat Zakat Fitrah untuk dapat 30 poin. (ingatkan ini di 7 hari terakhir ramadhan)
         
         Gaya bahasa: Santai, asik, seperti ngobrol dengan teman. Wajib sertakan 1 emoji. Jangan pakai tanda kutip di awal/akhir.

@@ -7,9 +7,8 @@ import {
     RAMADHAN_DAYS_TOTAL 
 } from "@/lib/ramadhan-time"
 
-// --- IMPORT UNTUK FITUR AI MOTIVASI ---
-import { Suspense } from "react"
-import AiMotivation from "@/components/features/dashboard/AiMotivation"
+// --- IMPORT TOMBOL AI INTERAKTIF ---
+import AiTipsButton from "@/components/features/dashboard/AiTipsButton"
 
 // --- Helper Waktu WIB ---
 function getWIBDate() {
@@ -163,6 +162,33 @@ export default async function DashboardPage() {
   })
   const hijriDate = `${safeDay} Ramadhan`
 
+  // --- 4. LOGIKA PESAN BERDASARKAN WAKTU ---
+  const hour = nowWIB.getHours();
+  let timeBasedMessage = "";
+
+  if (hour >= 16 && hour < 20) {
+      timeBasedMessage = "Waktunya berbuka! Jangan lupa centang puasa harianmu hari ini untuk klaim 3 poin ya!";
+  } else if (hour >= 20 && hour < 22) {
+      timeBasedMessage = "Habis Isya jangan langsung rebahan! Yuk kejar 2 poin dengan sholat Tarawih berjamaah. 🕌";
+  } else if (hour >= 22 || hour < 5) {
+      timeBasedMessage = "Malam yang tenang adalah waktu terbaik bersama Al-Qur'an. Yuk selesaikan 1 Juz dan dapatkan 5 poin! 📖";
+  } else if (hour >= 5 && hour < 10) {
+      timeBasedMessage = "Pagi yang cerah! Jadikan harimu lebih berkah dengan tadarus. Kejar bonus 153 poin dengan Khatam Al-Qur'an! ✨";
+  } else if (hour >= 10 && hour < 13) {
+      if (safeDay < 21) {
+          const daysLeft = 21 - safeDay;
+          timeBasedMessage = `Siang ini, mari kuatkan niat. Malam Lailatul Qadar tinggal ${daysLeft} hari lagi lho! Yuk persiapkan diri. 🌙`;
+      } else {
+          timeBasedMessage = "Kita sudah di 10 malam terakhir! Gas poll I'tikaf: dapat 4 poin di malam ganjil dan 2 poin di malam genap! 🔥";
+      }
+  } else if (hour >= 13 && hour < 16) {
+      if (isZakatPaid) {
+          timeBasedMessage = "Alhamdulillah kamu sudah membayar zakat dan menyelesaikan 1 dari 5 Sukses Ramadhan! Terus semangat ya! 💚";
+      } else {
+          timeBasedMessage = "Udah bayar zakat belum nih? Yuk segera tunaikan Zakat Fitrah sebelum waktunya habis! 🌾";
+      }
+  }
+
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-10">
       
@@ -215,20 +241,23 @@ export default async function DashboardPage() {
                         Assalamu'alaikum, <span className="text-yellow-300 drop-shadow-sm">{displayName}!</span>
                     </h1>
                     
-                    {/* --- AI MOTIVATION --- */}
-                    <Suspense fallback={
-                        <p className="text-emerald-100/70 text-sm leading-relaxed animate-pulse">
-                            Mencari inspirasi untukmu hari ini...
-                        </p>
-                    }>
-                        <AiMotivation userName={displayName} totalPoints={totalGlobalPoints} />
-                    </Suspense>
+                    {/* Pesan Dinamis Berdasarkan Waktu */}
+                    <p className="text-emerald-100 text-sm leading-relaxed mb-1 min-h-10">
+                        {timeBasedMessage}
+                    </p>
+
+                    {/* Tombol AI Interaktif */}
+                    <AiTipsButton 
+                        userName={displayName} 
+                        totalPoints={totalGlobalPoints} 
+                        currentDay={safeDay} 
+                    />
                  </div>
 
-                 {/* SCORE CARD (UPDATE: Klik menuju Leaderboard) */}
+                 {/* SCORE CARD */}
                  <Link 
                     href="/leaderboard" 
-                    className="group bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 min-w-37.5 text-center self-end md:self-auto shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-pointer flex flex-col items-center justify-center"
+                    className="group bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 min-w-37.5 text-center self-end md:self-auto shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-300 cursor-pointer flex flex-col items-center justify-center mt-4 md:mt-0"
                  >
                     <div className="text-emerald-200 text-xs font-bold uppercase tracking-widest mb-1 group-hover:text-white transition-colors">Total Poin</div>
                     <div className="text-4xl font-extrabold text-yellow-300 drop-shadow-sm flex items-center justify-center gap-2 mb-1">
@@ -243,7 +272,7 @@ export default async function DashboardPage() {
          </div>
       </div>
 
-      {/* --- BADGE PERINGATAN GUEST (Hanya Muncul Jika isAnonymous == true) --- */}
+      {/* --- BADGE PERINGATAN GUEST --- */}
       {isAnonymous && (
         <Link 
             href="/profile" 
