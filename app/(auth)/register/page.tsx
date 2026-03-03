@@ -1,21 +1,36 @@
 "use client" // Diubah menjadi Client Component untuk menggunakan useState
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { signup } from '../actions'
-import { Eye, EyeOff } from 'lucide-react' // Menambahkan ikon mata
+import { signup } from '../actions' // Sesuaikan path jika berbeda
+import { Eye, EyeOff, Loader2 } from 'lucide-react' // Menambahkan ikon mata dan Loader
 
 export default function RegisterPage(props: {
     searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const [showPassword, setShowPassword] = useState(false) // State untuk toggle password
+  const [isPending, startTransition] = useTransition() // State untuk loading animasi
   
   // Menangani unwrapping searchParams di Client Component
   const [error, setError] = useState<string | null>(null)
   props.searchParams?.then(params => {
       if (params.error) setError(params.error as string)
   })
+
+  // Handler kustom untuk tombol Submit agar dapat menangkap status loading
+  const handleRegisterSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Biarkan browser memvalidasi form HTML5 dulu (seperti atribut required dan minLength).
+    const form = e.currentTarget.form;
+    if (form && !form.checkValidity()) {
+        return; // Hentikan dan biarkan pesan error browser HTML5 muncul
+    }
+
+    // Jika valid, jalankan animasi loading dan eksekusi server action signup
+    startTransition(() => {
+        signup(new FormData(form as HTMLFormElement));
+    })
+  }
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-linear-to-br from-emerald-500 via-teal-600 to-emerald-800 p-4">
@@ -56,7 +71,7 @@ export default function RegisterPage(props: {
               type="text"
               autoComplete="nickname"
               required
-              placeholder="Contoh: Fulan123"
+              placeholder="Contoh: Fulan"
               className="block w-full rounded-xl bg-white/90 border-transparent shadow-sm focus:border-white focus:ring-4 focus:ring-white/20 sm:text-sm p-3 border text-gray-900 transition-all outline-none"
             />
           </div>
@@ -114,10 +129,18 @@ export default function RegisterPage(props: {
           {/* Submit Button */}
           <div className="pt-2">
             <button
-              formAction={signup}
-              className="flex w-full justify-center rounded-xl bg-emerald-900 py-3 px-4 text-sm font-bold text-white shadow-lg hover:bg-emerald-950 focus:outline-none focus:ring-2 focus:ring-white transition-all active:scale-[0.98]"
+              type="submit"
+              onClick={handleRegisterSubmit}
+              disabled={isPending}
+              className="flex w-full justify-center items-center gap-2 rounded-xl bg-emerald-900 py-3 px-4 text-sm font-bold text-white shadow-lg hover:bg-emerald-950 focus:outline-none focus:ring-2 focus:ring-white transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Daftar Sekarang
+                {isPending ? (
+                    <>
+                        <Loader2 size={18} className="animate-spin" /> Sedang Mendaftar...
+                    </>
+                ) : (
+                    "Daftar Sekarang"
+                )}
             </button>
           </div>
         </form>

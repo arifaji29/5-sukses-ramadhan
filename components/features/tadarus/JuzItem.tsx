@@ -14,9 +14,10 @@ interface JuzItemProps {
     surahNumber: number 
     ayah: number
   } | null
+  progressPercent?: number // 👈 Tambahan properti untuk persentase
 }
 
-export default function JuzItem({ juzNumber, title, desc, isCompleted, lastRead }: JuzItemProps) {
+export default function JuzItem({ juzNumber, title, desc, isCompleted, lastRead, progressPercent }: JuzItemProps) {
   const [isLoading, setIsLoading] = useState(false);
   
   // LOGIKA STATUS CARD (Visual Saja)
@@ -84,13 +85,32 @@ export default function JuzItem({ juzNumber, title, desc, isCompleted, lastRead 
                       </div>
                   ) : lastRead ? (
                       <div className="mt-2">
-                          <p className="text-[10px] text-amber-700 font-semibold uppercase tracking-wider mb-0.5">
-                              Terakhir Dibaca:
-                          </p>
+                          <div className="flex justify-between items-end mb-1">
+                              <p className="text-[10px] text-amber-700 font-semibold uppercase tracking-wider">
+                                  Terakhir Dibaca:
+                              </p>
+                              {/* 👈 Teks Persentase Ditampilkan di Sini */}
+                              {progressPercent !== undefined && (
+                                  <span className="text-[10px] font-bold text-amber-600">
+                                      {Math.round(progressPercent)}%
+                                  </span>
+                              )}
+                          </div>
+                          
                           <div className="flex items-center gap-1.5 text-amber-800 text-xs font-bold bg-white/60 px-2 py-1.5 rounded-md border border-amber-100">
                               <BookOpen size={12} />
                               <span className="truncate">{lastRead.surah} : {lastRead.ayah}</span>
                           </div>
+
+                          {/* 👈 Visual Progress Bar Ditampilkan di Sini */}
+                          {progressPercent !== undefined && (
+                              <div className="w-full bg-amber-100/70 rounded-full h-1.5 mt-2.5 overflow-hidden">
+                                  <div 
+                                      className="bg-amber-500 h-full rounded-full transition-all duration-700 ease-out" 
+                                      style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
+                                  />
+                              </div>
+                          )}
                       </div>
                   ) : (
                       <p className="text-xs mt-1 text-gray-400">

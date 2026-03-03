@@ -1,19 +1,36 @@
 "use client"
 
-import { useState, use } from 'react'
+import { useState, use, useTransition } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { login } from '../actions'
-import { Eye, EyeOff } from 'lucide-react'
+import { login } from '../actions' // Sesuaikan path ini jika Anda berada di folder yang berbeda
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 export default function LoginPage(props: {
     searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const [showPassword, setShowPassword] = useState(false)
+  const [isPending, startTransition] = useTransition()
   
   // Menggunakan use() untuk menangani Promise searchParams di Client Component
   const searchParams = use(props.searchParams!)
   const error = searchParams?.error
+
+  // Handler kustom untuk tombol Submit agar dapat menangkap status loading
+  const handleLoginSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Biarkan browser memvalidasi form HTML5 dulu (seperti atribut required).
+    const form = e.currentTarget.form;
+    if (form && !form.checkValidity()) {
+        return; // Hentikan dan biarkan pesan error browser HTML5 muncul
+    }
+
+    // Jika valid, jalankan animasi loading dan eksekusi server action
+    startTransition(() => {
+        // Karena ini dalam event onClick (bukan onSubmit form), 
+        // Anda perlu secara manual memanggil formAction (function login)
+        login(new FormData(form as HTMLFormElement));
+    })
+  }
 
   return (
     /* Latar belakang penuh dengan gradasi sesuai standar Tailwind v4 */
@@ -90,10 +107,18 @@ export default function LoginPage(props: {
 
           <div className="pt-2">
             <button
-              formAction={login}
-              className="flex w-full justify-center rounded-xl bg-emerald-900 py-3 px-4 text-sm font-bold text-white shadow-lg hover:bg-emerald-950 focus:outline-none focus:ring-2 focus:ring-white transition-all active:scale-[0.98]"
+              type="submit"
+              onClick={handleLoginSubmit}
+              disabled={isPending}
+              className="flex w-full justify-center items-center gap-2 rounded-xl bg-emerald-900 py-3 px-4 text-sm font-bold text-white shadow-lg hover:bg-emerald-950 focus:outline-none focus:ring-2 focus:ring-white transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Masuk Sekarang
+                {isPending ? (
+                    <>
+                        <Loader2 size={18} className="animate-spin" /> Sedang Masuk...
+                    </>
+                ) : (
+                    "Masuk Sekarang"
+                )}
             </button>
           </div>
         </form>
