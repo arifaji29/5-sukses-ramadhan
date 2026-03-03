@@ -86,9 +86,9 @@ export default async function LailatulQadarPage() {
       const isCompleted = logData?.is_itikaf === true
 
       // LOGIKA LOCK (WIB)
-      // I'tikaf dimulai malam hari. Kita buka kunci jam 18:00 WIB pada tanggal tersebut.
+      // I'tikaf umumnya dimulai menjelang tengah malam. Kita buka kunci jam 23:30 WIB pada tanggal tersebut.
       const unlockTime = new Date(date)
-      unlockTime.setHours(18, 0, 0, 0) // Buka jam 18:00 WIB
+      unlockTime.setHours(23, 30, 0, 0) // Buka jam 23:30 WIB
 
       const isLocked = nowWIB < unlockTime
 
@@ -139,7 +139,7 @@ export default async function LailatulQadarPage() {
                 </h1>
                 <p className="text-indigo-200 text-xs md:text-sm mt-1 leading-snug max-w-[80%]">
                     Buru kemuliaan 10 malam terakhir.
-                    <span className="block mt-1 text-indigo-300 text-[10px] italic opacity-80">(Terbuka setiap pukul 18.00 WIB)</span>
+                    <span className="block mt-1 text-indigo-300 text-[10px] italic opacity-80">(Terbuka setiap pukul 23.30 WIB)</span>
                 </p>
             </div>
 
@@ -167,7 +167,7 @@ export default async function LailatulQadarPage() {
 
             <div className="bg-black/30 backdrop-blur-sm rounded-xl p-3 md:p-5 border border-white/10 max-w-2xl">
                 <p className="text-lg md:text-2xl font-serif text-right mb-2 leading-loose text-yellow-100">
-                   لَيْلَةُ الْقَدْرِ ەۙ خَيْرٌ مِّنْ اَلْفِ شَهْرٍۗ
+                    لَيْلَةُ الْقَدْرِ ەۙ خَيْرٌ مِّنْ اَلْفِ شَهْرٍۗ
                 </p>
                 <p className="text-[10px] md:text-sm text-indigo-100 italic leading-relaxed">
                     "Malam kemuliaan itu lebih baik daripada seribu bulan."

@@ -5,7 +5,7 @@ import Link from "next/link"
 import Image from "next/image" 
 import { usePathname, useRouter } from "next/navigation" 
 import { createClient } from "@/lib/supabase/client" 
-import { LayoutDashboard, BookOpen, Moon, Sun, CheckCircle, LogOut, Menu, X, Star, Trophy, AlertTriangle } from "lucide-react" 
+import { LayoutDashboard, BookOpen, Moon, Sun, CheckCircle, LogOut, Menu, X, Star, Trophy, AlertTriangle, Info } from "lucide-react" 
 import { logout } from "@/app/(auth)/actions"
 import MobileBottomNav from "../../components/layout/MobileBottomNav"
 
@@ -75,7 +75,6 @@ export default function DashboardLayout({
     <div className="flex h-screen bg-gray-50">
       
       {/* --- MODAL PERINGATAN LOGOUT (KHUSUS GUEST) --- */}
-      {/* UPDATE: Tambahkan && isAnonymous sebagai pengaman ganda */}
       {showLogoutWarning && isAnonymous && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200">
@@ -158,7 +157,7 @@ export default function DashboardLayout({
             <span>Dashboard</span>
           </Link>
 
-          {/* Menu Leaderboard Baru */}
+          {/* Menu Leaderboard */}
           <Link href="/leaderboard" className={getLinkClass('/leaderboard')} onClick={() => setIsSidebarOpen(false)}>
             <Trophy size={20} />
             <span>Leaderboard</span>
@@ -191,6 +190,16 @@ export default function DashboardLayout({
           <Link href="/zakat" className={getLinkClass('/zakat')} onClick={() => setIsSidebarOpen(false)}>
             <CheckCircle size={20} />
             <span>5. Sukses Zakat</span>
+          </Link>
+
+          {/* Menu Tambahan */}
+          <div className="pt-4 pb-2">
+            <p className="px-4 text-xs font-bold text-gray-400 uppercase tracking-widest">Lainnya</p>
+          </div>
+
+          <Link href="/about" className={getLinkClass('/about')} onClick={() => setIsSidebarOpen(false)}>
+            <Info size={20} />
+            <span>Tentang Aplikasi</span>
           </Link>
         </nav>
 

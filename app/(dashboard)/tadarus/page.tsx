@@ -1,3 +1,4 @@
+// src/app/(dashboard)/tadarus/page.tsx
 import { createClient } from "@/lib/supabase/server"
 import { JUZ_DATA } from "@/lib/juz-data"
 import { SURAH_DATA } from "@/lib/surah-data"
