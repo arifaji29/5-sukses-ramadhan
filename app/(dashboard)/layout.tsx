@@ -47,21 +47,18 @@ export default function DashboardLayout({
   }, [supabase])
 
   // --- EFEK RESET LOADING ---
-  // Jika pathname berubah (berarti sudah pindah halaman), matikan loading
   useEffect(() => {
     setNavigatingTo(null)
-    setIsSidebarOpen(false) // Otomatis tutup sidebar mobile
+    setIsSidebarOpen(false) 
   }, [pathname])
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
 
-  // Fungsi untuk menangani klik navigasi dengan loading
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-      if (pathname === href) return; // Jangan loading jika klik halaman saat ini
+      if (pathname === href) return; 
       setNavigatingTo(href);
   }
 
-  // Fungsi pembuat Class (diperbarui untuk handle loading visual)
   const getLinkClass = (href: string) => `
     flex items-center justify-between px-4 py-3 rounded-xl transition-all font-medium 
     ${pathname === href 
@@ -84,14 +81,12 @@ export default function DashboardLayout({
     router.push('/profile')
   }
 
-  // Komponen Helper untuk Item Menu
   const NavItem = ({ href, icon: Icon, label }: { href: string, icon: any, label: string }) => (
       <Link href={href} className={getLinkClass(href)} onClick={(e) => handleNavClick(e, href)}>
         <div className="flex items-center gap-3">
             <Icon size={20} className={navigatingTo === href ? "animate-pulse text-emerald-500" : ""} />
             <span>{label}</span>
         </div>
-        {/* Tampilkan Spinner jika sedang menuju href ini */}
         {navigatingTo === href && <Loader2 size={16} className="animate-spin text-emerald-500" />}
       </Link>
   )
@@ -185,7 +180,8 @@ export default function DashboardLayout({
         </nav>
 
         {/* Logout Section */}
-        <div className="p-4 border-t border-gray-100 shrink-0">
+        {/* PERBAIKAN: Menambahkan pb-20 md:pb-4 agar tidak tertutup nav bawah di mobile */}
+        <div className="p-4 pb-24 md:pb-4 border-t border-gray-100 shrink-0 bg-white">
             <form action={logout}>
                 <button type="submit" onClick={handleLogoutClick} className="flex items-center gap-3 w-full px-4 py-3 text-red-600 rounded-xl hover:bg-red-50 transition-colors font-medium">
                     <LogOut size={20} />
@@ -218,7 +214,6 @@ export default function DashboardLayout({
 
         {/* Scrollable Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8 scroll-smooth relative">
-          {/* Overlay loading global opsional saat navigasi (agar konten agak buram) */}
           {navigatingTo && (
               <div className="absolute inset-0 bg-white/40 z-50 backdrop-blur-[1px] transition-all"></div>
           )}

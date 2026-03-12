@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import ItikafItem from "@/components/features/lailatul-qadar/ItikafItem"
+import DoaPopup from "@/components/features/lailatul-qadar/DoaPopup"
 import {
   RAMADHAN_START_DATE_STR,
   getCurrentRamadhanDay,
@@ -51,7 +52,7 @@ export default async function LailatulQadarPage() {
   }
 
   // 4. Waktu Saat Ini (WIB)
-  const nowWIB = getWIBDate(); // GUNAKAN WIB
+  const nowWIB = getWIBDate(); 
   const currentRamadhanDay = getCurrentRamadhanDay()
   const safeDay = Math.max(1, Math.min(currentRamadhanDay, RAMADHAN_DAYS_TOTAL))
 
@@ -63,13 +64,16 @@ export default async function LailatulQadarPage() {
   })
   const hijriDate = `${safeDay} Ramadhan`
 
+  // --- LOGIKA POPUP DOA (Malam Hari 20:00 - 04:00 WIB) ---
+  const currentHourWIB = nowWIB.getHours()
+  const isNightTime = currentHourWIB >= 20 || currentHourWIB < 4
+
   // 5. Generate List 10 Malam Terakhir
   const days = Array.from({ length: 10 }, (_, i) => {
       const dayNum = 21 + i
 
-      // Tanggal Masehi (H-1 dari Puasa karena I'tikaf dimulai malam hari)
       const date = new Date(RAMADHAN_START_DATE_STR)
-      date.setDate(date.getDate() + (dayNum - 2)) // H-1 dari hari ke-21 Puasa
+      date.setDate(date.getDate() + (dayNum - 2)) 
 
       const dateStr = date.toLocaleDateString("id-ID", {
           weekday: 'long',
@@ -85,13 +89,10 @@ export default async function LailatulQadarPage() {
       const logData = progress.find(p => p.night_number === dayNum)
       const isCompleted = logData?.is_itikaf === true
 
-      // LOGIKA LOCK (WIB)
-      // I'tikaf umumnya dimulai menjelang tengah malam. Kita buka kunci jam 23:30 WIB pada tanggal tersebut.
       const unlockTime = new Date(date)
-      unlockTime.setHours(23, 30, 0, 0) // Buka jam 23:30 WIB
+      unlockTime.setHours(23, 30, 0, 0) 
 
       const isLocked = nowWIB < unlockTime
-
       const isOddNight = dayNum % 2 !== 0
 
       return {
@@ -108,6 +109,9 @@ export default async function LailatulQadarPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20">
+
+      {/* Kirim status waktu ke komponen Popup */}
+      <DoaPopup isNightTime={isNightTime} />
 
       {/* HEADER DASHBOARD */}
       <div className="bg-linear-to-br from-indigo-900 via-purple-900 to-slate-900 rounded-2xl p-5 md:p-8 text-white shadow-xl relative overflow-hidden flex flex-col">
