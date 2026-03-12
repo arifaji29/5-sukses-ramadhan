@@ -68,10 +68,14 @@ export default function DoaPopup({ isNightTime }: { isNightTime: boolean }) {
                             
                             <h3 className="text-lg font-bold text-white mb-3 tracking-wide">Do'a Lailatul Qadar</h3>
                             
+                            {/* PERBAIKAN FONT ARAB: Ditambahkan style fontFamily khusus untuk LPMQ */}
                             <p 
-                                className="text-[22px] font-medium text-yellow-300 leading-relaxed mb-3 text-center w-full drop-shadow-md" 
+                                className="text-[21px] font-normal text-yellow-300 leading-relaxed mb-3 text-center w-full drop-shadow-md" 
                                 dir="rtl"
-                                style={{ lineHeight: "1.7" }}
+                                style={{ 
+                                    fontFamily: "'LPMQ IsepMisbah', 'Traditional Arabic', serif", 
+                                    lineHeight: "2" 
+                                }}
                             >
                                 اَللَّهُمَّ إِنَّكَ عَفُوٌّ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي
                             </p>
