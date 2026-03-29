@@ -3,9 +3,7 @@ import ZakatForm from "@/components/features/zakat/ZakatForm"
 import ZakatCountdown from "@/components/features/zakat/ZakatCountdown" 
 import { HandHeart, Calendar, Moon } from "lucide-react"
 import { 
-    RAMADHAN_START_DATE_STR, 
-    getCurrentRamadhanDay, 
-    RAMADHAN_DAYS_TOTAL 
+    HIJRI_OFFSET
 } from "@/lib/ramadhan-time"
 
 // --- Helper Waktu WIB (Agar Tanggal Masehi Akurat) ---
@@ -13,6 +11,29 @@ function getWIBDate() {
   const now = new Date();
   const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
   return new Date(utc + (7 * 3600000)); // UTC + 7 Jam
+}
+
+// --- Helper Tanggal Hijriah Dinamis ---
+function getHijriDetails() {
+    const targetDate = getWIBDate();
+    
+    // Logika Maghrib (Jam 18:00 ke atas sudah ganti hari Hijriah)
+    if (targetDate.getHours() >= 18) {
+        targetDate.setDate(targetDate.getDate() + 1);
+    }
+
+    // APLIKASIKAN KOREKSI HARI DARI SIDANG ISBAT
+    targetDate.setDate(targetDate.getDate() + HIJRI_OFFSET);
+
+    const formatter = new Intl.DateTimeFormat('id-TN-u-ca-islamic-umalqura', {
+        day: 'numeric', month: 'long', year: 'numeric'
+    });
+    
+    const parts = formatter.formatToParts(targetDate);
+    const day = parseInt(parts.find(p => p.type === 'day')?.value || '1');
+    const month = parts.find(p => p.type === 'month')?.value || '';
+
+    return { day, month };
 }
 
 export default async function ZakatPage() {
@@ -28,9 +49,7 @@ export default async function ZakatPage() {
 
   // 2. Waktu Saat Ini (Gunakan WIB)
   const nowWIB = getWIBDate();
-  
-  const currentRamadhanDay = getCurrentRamadhanDay()
-  const safeDay = Math.max(1, Math.min(currentRamadhanDay, RAMADHAN_DAYS_TOTAL))
+  const hijri = getHijriDetails();
   
   const masehiDate = nowWIB.toLocaleDateString("id-ID", {
       weekday: 'short', 
@@ -38,7 +57,9 @@ export default async function ZakatPage() {
       month: 'short', 
       year: 'numeric'
   })
-  const hijriDate = `${safeDay} Ramadhan`
+  
+  // Tanggal Hijriah Dinamis
+  const hijriDate = `${hijri.day} ${hijri.month}`
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-20">

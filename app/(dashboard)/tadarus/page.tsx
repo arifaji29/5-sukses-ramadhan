@@ -1,4 +1,3 @@
-// src/app/(dashboard)/tadarus/page.tsx
 import { createClient } from "@/lib/supabase/server"
 import { JUZ_DATA } from "@/lib/juz-data"
 import { SURAH_DATA } from "@/lib/surah-data"
@@ -9,7 +8,8 @@ import RestartButton from "@/components/features/tadarus/RestartButton"
 import KhatamPopup from "@/components/features/tadarus/KhatamPopup"
 import { 
     getCurrentRamadhanDay, 
-    RAMADHAN_DAYS_TOTAL 
+    RAMADHAN_DAYS_TOTAL,
+    HIJRI_OFFSET
 } from "@/lib/ramadhan-time"
 import { BookOpen, Trophy, Calendar, Moon, Star } from "lucide-react"
 
@@ -18,6 +18,27 @@ function getWIBDate() {
   const now = new Date();
   const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
   return new Date(utc + (7 * 3600000)); // UTC + 7 Jam
+}
+
+// --- Helper Tanggal Hijriah Dinamis ---
+function getHijriDetails() {
+    const targetDate = getWIBDate();
+    
+    if (targetDate.getHours() >= 18) {
+        targetDate.setDate(targetDate.getDate() + 1);
+    }
+
+    targetDate.setDate(targetDate.getDate() + HIJRI_OFFSET);
+
+    const formatter = new Intl.DateTimeFormat('id-TN-u-ca-islamic-umalqura', {
+        day: 'numeric', month: 'long', year: 'numeric'
+    });
+    
+    const parts = formatter.formatToParts(targetDate);
+    const day = parseInt(parts.find(p => p.type === 'day')?.value || '1');
+    const month = parts.find(p => p.type === 'month')?.value || '';
+
+    return { day, month };
 }
 
 // --- KAMUS DATA: Jumlah ayat dari Surah 1 hingga 114 untuk akurasi mutlak ---
@@ -81,13 +102,14 @@ export default async function TadarusPage() {
   const isKhatamCurrentPeriod = currentProgressCount >= 30;
 
   // 5. WIDGET TANGGAL
-  const currentRamadhanDay = getCurrentRamadhanDay()
-  const safeDay = Math.max(1, Math.min(currentRamadhanDay, RAMADHAN_DAYS_TOTAL))
+  const hijri = getHijriDetails();
   
   const masehiDate = nowWIB.toLocaleDateString("id-ID", {
       weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
   })
-  const hijriDate = `${safeDay} Ramadhan`
+  
+  // Tanggal Hijriah Dinamis
+  const hijriDate = `${hijri.day} ${hijri.month}`
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20">

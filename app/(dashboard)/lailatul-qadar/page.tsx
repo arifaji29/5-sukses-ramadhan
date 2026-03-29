@@ -4,7 +4,8 @@ import DoaPopup from "@/components/features/lailatul-qadar/DoaPopup"
 import {
   RAMADHAN_START_DATE_STR,
   getCurrentRamadhanDay,
-  RAMADHAN_DAYS_TOTAL
+  RAMADHAN_DAYS_TOTAL,
+  HIJRI_OFFSET
 } from "@/lib/ramadhan-time"
 import { Moon, Calendar, Star, Flame, CheckCircle, Sparkles, Clock } from "lucide-react"
 
@@ -13,6 +14,29 @@ function getWIBDate() {
   const now = new Date();
   const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
   return new Date(utc + (7 * 3600000)); // UTC + 7 Jam
+}
+
+// --- Helper Tanggal Hijriah Dinamis ---
+function getHijriDetails() {
+    const targetDate = getWIBDate();
+    
+    // Logika Maghrib (Jam 18:00 ke atas sudah ganti hari Hijriah)
+    if (targetDate.getHours() >= 18) {
+        targetDate.setDate(targetDate.getDate() + 1);
+    }
+
+    // APLIKASIKAN KOREKSI HARI DARI SIDANG ISBAT
+    targetDate.setDate(targetDate.getDate() + HIJRI_OFFSET);
+
+    const formatter = new Intl.DateTimeFormat('id-TN-u-ca-islamic-umalqura', {
+        day: 'numeric', month: 'long', year: 'numeric'
+    });
+    
+    const parts = formatter.formatToParts(targetDate);
+    const day = parseInt(parts.find(p => p.type === 'day')?.value || '1');
+    const month = parts.find(p => p.type === 'month')?.value || '';
+
+    return { day, month };
 }
 
 export default async function LailatulQadarPage() {
@@ -55,6 +79,7 @@ export default async function LailatulQadarPage() {
   const nowWIB = getWIBDate(); 
   const currentRamadhanDay = getCurrentRamadhanDay()
   const safeDay = Math.max(1, Math.min(currentRamadhanDay, RAMADHAN_DAYS_TOTAL))
+  const hijri = getHijriDetails();
 
   const masehiDate = nowWIB.toLocaleDateString("id-ID", {
       weekday: 'short',
@@ -62,14 +87,18 @@ export default async function LailatulQadarPage() {
       month: 'short',
       year: 'numeric'
   })
-  const hijriDate = `${safeDay} Ramadhan`
+  
+  // Tanggal Hijriah Dinamis
+  const hijriDate = `${hijri.day} ${hijri.month}`
 
   // --- LOGIKA POPUP DOA (Malam Hari 20:00 - 04:00 WIB) ---
   const currentHourWIB = nowWIB.getHours()
   const isNightTime = currentHourWIB >= 20 || currentHourWIB < 4
 
-  // 5. Generate List 10 Malam Terakhir
-  const days = Array.from({ length: 10 }, (_, i) => {
+  // 5. Generate List Malam Lailatul Qadar (Otomatis 9 atau 10 Malam)
+  const totalLailatulQadarNights = Math.max(0, RAMADHAN_DAYS_TOTAL - 20); // Jika 29 -> 9, Jika 30 -> 10
+  
+  const days = Array.from({ length: totalLailatulQadarNights }, (_, i) => {
       const dayNum = 21 + i
 
       const date = new Date(RAMADHAN_START_DATE_STR)
@@ -142,7 +171,8 @@ export default async function LailatulQadarPage() {
                     <Sparkles className="text-yellow-400 fill-yellow-400 shrink-0" /> Sukses Lailatul Qadar
                 </h1>
                 <p className="text-indigo-200 text-xs md:text-sm mt-1 leading-snug max-w-[80%]">
-                    Buru kemuliaan 10 malam terakhir.
+                    {/* Teks Dinamis Berdasarkan Umur Ramadhan */}
+                    Buru kemuliaan 10 malam terakhir ramadhan.
                     <span className="block mt-1 text-indigo-300 text-[10px] italic opacity-80">(Terbuka setiap pukul 23.30 WIB)</span>
                 </p>
             </div>
@@ -182,7 +212,7 @@ export default async function LailatulQadarPage() {
             {daysToLailatulQadar > 0 && (
                  <div className="mt-4 inline-flex items-center gap-2 bg-yellow-500/20 border border-yellow-500/30 px-3 py-1.5 rounded-lg text-xs text-yellow-100">
                     <Clock size={14} />
-                    <span>Menuju 10 Malam Terakhir: <b>{daysToLailatulQadar} Hari Lagi</b></span>
+                    <span>Menuju Malam Terakhir: <b>{daysToLailatulQadar} Hari Lagi</b></span>
                  </div>
             )}
         </div>

@@ -2,7 +2,7 @@
 
 import { Clock } from "lucide-react"
 import { useEffect, useState } from "react"
-import { getZakatDeadline } from "@/lib/ramadhan-time" // IMPORT DARI LIB
+import { getZakatDeadline, RAMADHAN_DAYS_TOTAL } from "@/lib/ramadhan-time" 
 
 export default function ZakatCountdown() {
   const [timeLeft, setTimeLeft] = useState<{days: number, hours: number, minutes: number} | null>(null)
@@ -40,7 +40,8 @@ export default function ZakatCountdown() {
             </div>
             <div>
                 <h3 className="font-bold text-sm md:text-base">Batas Akhir Pembayaran</h3>
-                <p className="text-xs text-orange-700 opacity-80">30 Ramadhan, Pukul 23.59</p>
+                {/* 👈 MENGGUNAKAN VARIABEL DINAMIS AGAR BISA "29 Ramadhan" ATAU "30 Ramadhan" */}
+                <p className="text-xs text-orange-700 opacity-80">{RAMADHAN_DAYS_TOTAL} Ramadhan, Pukul 23.59</p>
             </div>
         </div>
 

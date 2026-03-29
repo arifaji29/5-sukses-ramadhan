@@ -1,40 +1,68 @@
 // src/lib/ramadhan-time.ts
 
-// Sesuaikan tanggal mulai sesuai keinginan (contoh: 17 Februari 2026)
-export const RAMADHAN_START_DATE_STR = "2026-02-19T00:00:00"; 
+// ============================================================================
+// 1. SISTEM PENANGGALAN HIJRIAH DINAMIS (FULL YEAR)
+// ============================================================================
 
+// KUNCI RUKYATUL HILAL: Variabel ini untuk penyesuaian manual (Sidang Isbat)
+// 0  = Sesuai hitungan kalender standar (Umm al-Qura)
+// +1 = Mundur 1 hari (Misal bulan sebelumnya digenapkan 30 hari / Istikmal)
+// -1 = Maju 1 hari 
+export const HIJRI_OFFSET = -1; 
+
+/**
+ * Menghasilkan tanggal Hijriah dinamis berdasarkan waktu saat ini,
+ * mempertimbangkan pergantian hari saat Maghrib dan hasil Sidang Isbat.
+ */
+export function getDynamicHijriDate(inputDate: Date = new Date()): string {
+    // 1. Clone tanggal agar tidak merubah referensi asli
+    const targetDate = new Date(inputDate.getTime());
+
+    // 2. LOGIKA SYARIAT (PERGANTIAN HARI SAAT MAGHRIB)
+    // Jika sudah lewat jam 18:00 (Maghrib), maka secara Hijriah sudah masuk hari esok
+    const maghribHour = 18; 
+    if (targetDate.getHours() >= maghribHour) {
+        targetDate.setDate(targetDate.getDate() + 1); 
+    }
+
+    // 3. PENYESUAIAN RUKYATUL HILAL (SIDANG ISBAT)
+    targetDate.setDate(targetDate.getDate() + HIJRI_OFFSET);
+
+    // 4. Konversi ke Hijriah menggunakan API bawaan Browser/Node.js
+    // 'id-TN-u-ca-islamic-umalqura' memastikan format Bahasa Indonesia & kalender Umm al-Qura
+    const hijriString = new Intl.DateTimeFormat('id-TN-u-ca-islamic-umalqura', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    }).format(targetDate);
+
+    return hijriString; // Output: "1 Syawal 1447", "10 Dzulhijjah 1447", dll.
+}
+
+
+// ============================================================================
+// 2. FUNGSI KHUSUS RAMADHAN (Legacy - Dipertahankan agar app tidak error)
+// ============================================================================
+
+export const RAMADHAN_START_DATE_STR = "2026-02-19T00:00:00"; 
 export const RAMADHAN_START = new Date(RAMADHAN_START_DATE_STR);
 export const RAMADHAN_DAYS_TOTAL = 30;
 
-// FUNGSI UTAMA: MENGHITUNG HARI DENGAN LOGIKA MAGHRIB
 export function getCurrentRamadhanDay() {
   const now = new Date();
   const start = new Date(RAMADHAN_START_DATE_STR);
   
-  // 1. Hitung selisih hari dasar (Gregorian / Masehi)
-  // Ini menghitung jarak hari dari tanggal mulai (pukul 00:00)
   const diffTime = now.getTime() - start.getTime();
-  
-  // Math.floor digunakan agar hitungan hari bulat ke bawah
-  // Ditambah 1 agar hari pertama dihitung "Hari ke-1" bukan "Hari ke-0"
   let day = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-  // 2. LOGIKA SYARIAT (PERGANTIAN HARI SAAT MAGHRIB)
-  // Kita asumsikan Maghrib rata-rata pukul 18:00
-  // Jika jam sekarang >= 18, maka secara Hijriah sudah masuk hari berikutnya (Malam besok)
   const maghribHour = 18; 
   if (now.getHours() >= maghribHour) {
       day += 1; 
   }
-
-  // 3. Validasi Batas
-  // Jika hasilnya < 1 (misal H-1 atau H-2), kita kembalikan 0 atau negatif
-  // agar UI bisa menangani status "Belum Mulai"
   
   return day;
 }
 
-// Fungsi Status Fase Ramadhan
 export function getRamadhanPhase() {
     const day = getCurrentRamadhanDay();
     if (day <= 0) return "Menunggu Ramadhan";
@@ -44,27 +72,24 @@ export function getRamadhanPhase() {
     return "Idul Fitri / Syawal";
 }
 
-// FUNGSI COUNTDOWN ZAKAT (Batas Akhir Malam Takbiran)
 export function getZakatDeadline() {
     const start = new Date(RAMADHAN_START_DATE_STR);
     const deadline = new Date(start);
     
-    // Batas akhir adalah tanggal 30 Ramadhan saat Maghrib (masuk 1 Syawal)
-    // Atau seringkali ditoleransi sampai sebelum Shalat Ied. 
-    // Di sini kita set sampai akhir hari ke-30 (sebelum ganti tanggal Masehi besoknya)
-    deadline.setDate(start.getDate() + 29); 
+    // Menggunakan (RAMADHAN_DAYS_TOTAL - 1) agar otomatis menyesuaikan
+    // Jika 30 hari -> 30 - 1 = 29 hari dari tanggal mulai
+    // Jika 29 hari -> 29 - 1 = 28 hari dari tanggal mulai
+    deadline.setDate(start.getDate() + (RAMADHAN_DAYS_TOTAL - 1)); 
+    
+    // Set ke pukul 23:59:59 (Batas akhir hari tersebut)
     deadline.setHours(23, 59, 59); 
     return deadline;
 }
 
-// FUNGSI COUNTDOWN LAILATUL QADAR (Malam 21)
 export function getLailatulQadarStartDate() {
     const start = new Date(RAMADHAN_START_DATE_STR);
-    
-    // Malam 21 dimulai saat Maghrib di hari ke-20 Puasa
     const date21 = new Date(start);
-    date21.setDate(start.getDate() + 19); // +19 hari dari tgl 1 (karena Malam 21 ada di sore hari ke-20)
-    date21.setHours(18, 0, 0); // Tepat Azan Maghrib
-    
+    date21.setDate(start.getDate() + 19); 
+    date21.setHours(18, 0, 0); 
     return date21;
 }

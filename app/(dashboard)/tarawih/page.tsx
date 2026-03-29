@@ -3,15 +3,39 @@ import TarawihItem from "@/components/features/tarawih/TarawihItem"
 import {
   RAMADHAN_START_DATE_STR,
   getCurrentRamadhanDay,
-  RAMADHAN_DAYS_TOTAL
+  RAMADHAN_DAYS_TOTAL,
+  HIJRI_OFFSET
 } from "@/lib/ramadhan-time"
 import { Moon, Calendar, Flame, CheckCircle, Star } from "lucide-react"
 
-// --- Helper Waktu WIB (Penting untuk mengatasi timezone server) ---
+// --- Helper Waktu WIB ---
 function getWIBDate() {
   const now = new Date();
   const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
   return new Date(utc + (7 * 3600000)); // UTC + 7 Jam
+}
+
+// --- Helper Tanggal Hijriah Dinamis ---
+function getHijriDetails() {
+    const targetDate = getWIBDate();
+    
+    // Logika Maghrib (Jam 18:00 ke atas sudah ganti hari Hijriah)
+    if (targetDate.getHours() >= 18) {
+        targetDate.setDate(targetDate.getDate() + 1);
+    }
+
+    // APLIKASIKAN KOREKSI HARI DARI SIDANG ISBAT
+    targetDate.setDate(targetDate.getDate() + HIJRI_OFFSET);
+
+    const formatter = new Intl.DateTimeFormat('id-TN-u-ca-islamic-umalqura', {
+        day: 'numeric', month: 'long', year: 'numeric'
+    });
+    
+    const parts = formatter.formatToParts(targetDate);
+    const day = parseInt(parts.find(p => p.type === 'day')?.value || '1');
+    const month = parts.find(p => p.type === 'month')?.value || '';
+
+    return { day, month };
 }
 
 export default async function TarawihPage() {
@@ -41,21 +65,22 @@ export default async function TarawihPage() {
 
   // --- WAKTU SAAT INI (WIB) ---
   const nowWIB = getWIBDate();
+  const hijri = getHijriDetails();
 
   // Format Header
-  const currentRamadhanDay = getCurrentRamadhanDay()
-  const safeDay = Math.max(1, Math.min(currentRamadhanDay, RAMADHAN_DAYS_TOTAL))
-
   const masehiDate = nowWIB.toLocaleDateString("id-ID", {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
     year: 'numeric'
   })
-  const hijriDate = `${safeDay} Ramadhan`
+  
+  // Tanggal Hijriah Dinamis
+  const hijriDate = `${hijri.day} ${hijri.month}`
 
   // --- GENERATE LIST HARI ---
-  const days = Array.from({ length: 30 }, (_, i) => {
+  // Menggunakan RAMADHAN_DAYS_TOTAL
+  const days = Array.from({ length: RAMADHAN_DAYS_TOTAL }, (_, i) => {
     const dayNum = i + 1
 
     // 1. Tentukan Tanggal Masehi (Mundur 1 hari dari Start Puasa untuk Tarawih)
@@ -103,7 +128,6 @@ export default async function TarawihPage() {
         <div className="absolute -bottom-10 right-0 opacity-10 pointer-events-none">
           <Moon size={240} />
         </div>
-        {/* Tambahan hiasan bintang agar senada dengan desain login */}
         <div className="absolute top-10 right-20 opacity-20 pointer-events-none animate-pulse">
             <Star size={40} />
         </div>
